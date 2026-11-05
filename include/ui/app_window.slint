@@ -1,0 +1,97 @@
+import { Button, VerticalBox, HorizontalBox, TabWidget } from "std-widgets.slint";
+import "../../assets/fonts/baseFont.ttf";
+
+export struct PendingSong {
+    image: image,
+    title: string,
+}
+
+export struct Playlist {
+    title: string
+}
+
+export component OpenPlayerUI inherits Window {
+    in-out property <string> current-sound: "Loading..."; // Current song
+    in-out property <image> current-image; // Current song image
+    in-out property <string> toggle-button: "Loading..";
+
+    in-out property <[Playlist]> playlists;
+    in-out property <[PendingSong]> pendingSongs: [];
+
+    width: 700px;
+    height: 700px;
+    background: rgba(17, 17, 27, 0.75);
+
+    title: "OpenPlayer";
+
+    callback playlist_set(int);
+    callback toggle-music();
+
+    VerticalBox {
+        alignment: start;
+        cross-axis-alignment: center;
+        spacing: 10px;
+
+        Image {
+            width: 200px; height: 200px;
+            source: current-image;
+            image-fit: contain;
+            vertical-alignment: top;
+        }
+
+        Text {
+            text: current-sound;
+            color: rgb(215, 215, 247);
+            font-size: 24px;
+        }
+
+        Button {
+            text: toggle-button;
+            clicked() => {
+                toggle-music();
+            }
+        }
+
+        Rectangle {
+            background: rgba(17, 17, 27, 0.80);
+            width: 98%;
+            height: 50px;
+            border-radius: 4px;
+
+            HorizontalBox {
+                for playlist[index] in playlists : Button {
+                    text: playlist.title;
+
+                    clicked => {
+                        root.playlist_set(index);
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            background: rgba(17, 17, 27, 0.80);
+            width: 98%;
+            height: 58%;
+            border-radius: 4px;
+
+            VerticalLayout {
+                alignment: start;
+                cross-axis-alignment: start;
+                spacing: 5px;
+        
+                HorizontalLayout {
+                    for pending_song in pendingSongs : Image {
+                        width: 20px; height: 20px;
+                        source: pending_song.image;
+                    }
+                    for pending_song in pendingSongs : Text {
+                        text: pending_song.title;
+                        font-size: 20px;
+                        color: rgb(215, 215, 247);
+                    }
+                }
+            }
+        }
+    }
+}

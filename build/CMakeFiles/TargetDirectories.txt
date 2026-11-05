@@ -1,0 +1,3 @@
+/home/gear/Programming/CPP/OpenPlayer/build/CMakeFiles/OpenPlayer.dir
+/home/gear/Programming/CPP/OpenPlayer/build/CMakeFiles/edit_cache.dir
+/home/gear/Programming/CPP/OpenPlayer/build/CMakeFiles/rebuild_cache.dir
