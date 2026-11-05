@@ -28,12 +28,12 @@ class EventManager
         4 - change volume
         */
 
-        // 0 = event-type 1 = event 2 = event datas
+        // 0 = eventTarget 1 = eventId 2 = eventData
         //110 = audio - toggle sound - no data
-        int currentEvent = 000;
+        std::vector<int> currentEvent = {0, 0, 0};
 
     public:
-        void fireEvent(int eventData);
+        void fireEvent(int eventTarget, int eventId, int eventData);
 
-        int getEvent();
+        std::vector<int> getEvent(int eventTarget);
 };
