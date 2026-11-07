@@ -191,8 +191,7 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
             if (result == 1) {
                 unloadSound();
                 loadSound(getSound(0));
-                playSound();
-                isPlaying = true;
+                isPlaying = false;
                 std::cout << SOUND_EXECUTED_EVENT;
                 std::cout << SOUND_SENT_EVENT;
                 constexpr Event newEvent{.eventTarget = 2, .eventId = 1, .eventData = 0};

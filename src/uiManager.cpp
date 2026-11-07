@@ -115,7 +115,7 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
 
                         ui_strong->set_current_sound(slint::SharedString(soundName));
                         ui_strong->set_current_image(soundImage);
-                        ui_strong->set_toggle_button(ICON_PAUSE);
+                        ui_strong->set_toggle_button(ICON_PLAY);
 
                         ui_strong->set_pendingSongs(songModel);
                     }
