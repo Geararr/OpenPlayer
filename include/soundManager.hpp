@@ -44,6 +44,7 @@ class SoundManager {
         std::vector<std::string> getPlaylists();
         int reloadSounds(int playlist, EventManager* eventManager); // searches assets/music/playlist folder for any music and loads them inside sounds array
 
+        size_t getPlaylistSize();
         Sound* getSound(int soundIndex);
 
         void loadSound(Sound* sound); // change current sound

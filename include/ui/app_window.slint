@@ -1,4 +1,4 @@
-import { Button, VerticalBox, HorizontalBox, TabWidget } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, TabWidget, ScrollView } from "std-widgets.slint";
 import "../../assets/fonts/baseFont.ttf";
 
 export struct PendingSong {
@@ -25,6 +25,7 @@ export component OpenPlayerUI inherits Window {
     title: "OpenPlayer";
 
     callback playlist_set(int);
+    callback song_set(int);
     callback toggle-music();
 
     VerticalBox {
@@ -58,12 +59,17 @@ export component OpenPlayerUI inherits Window {
             height: 50px;
             border-radius: 4px;
 
-            HorizontalBox {
-                for playlist[index] in playlists : Button {
-                    text: playlist.title;
+            ScrollView {
+                width: 100%;
+                height: 100%;
 
-                    clicked => {
-                        root.playlist_set(index);
+                HorizontalBox {
+                    for playlist[index] in playlists : Button {
+                        text: playlist.title;
+
+                        clicked => {
+                            root.playlist_set(index);
+                        }
                     }
                 }
             }
@@ -77,18 +83,37 @@ export component OpenPlayerUI inherits Window {
 
             VerticalLayout {
                 alignment: start;
-                cross-axis-alignment: start;
-                spacing: 5px;
-        
-                HorizontalLayout {
-                    for pending_song in pendingSongs : Image {
-                        width: 20px; height: 20px;
-                        source: pending_song.image;
+                cross-axis-alignment: center;
+                spacing: 15px;
+
+                for pending_song[index] in pendingSongs : Rectangle {
+                    height: 50px;
+                    background: ta.has-hover ? rgba(255, 255, 255, 0.1) : transparent;
+                    border-radius: 8px;
+
+                    ta := TouchArea {
+                        clicked => {
+                            root.song_set(index);
+                        }
                     }
-                    for pending_song in pendingSongs : Text {
-                        text: pending_song.title;
-                        font-size: 20px;
-                        color: rgb(215, 215, 247);
+
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        spacing: 15px;
+                        alignment: center;
+
+                        cross-axis-alignment: center;
+
+                        Image {
+                            width: 20px; height: 20px;
+                            source: pending-song.image;
+                        }
+                        Text {
+                            text: pending-song.title;
+                            font-size: 20px;
+                            color: rgb(215, 215, 247);
+                        }
                     }
                 }
             }

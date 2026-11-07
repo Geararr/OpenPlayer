@@ -40,7 +40,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
                     std::cout << "Playlist empty/No sound selected.\n";
                 }
                 else {
-                    constexpr Event event{.eventTarget = 1, .eventId = 1, .eventData = 0};
+                    constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
                     eventManager->fireEvent(event);
                     std::cout << UI_SENT_EVENT;
                     ui->set_toggle_button(ICON_PAUSE);
@@ -51,7 +51,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
                     std::cout << "Playlist empty/No sound selected.\n";
                 }
                 else {
-                    constexpr Event event{.eventTarget = 1, .eventId = 1, .eventData = 0};
+                    constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
                     eventManager->fireEvent(event);
                     std::cout << UI_SENT_EVENT;
                     ui->set_toggle_button(ICON_PLAY);
@@ -60,11 +60,22 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
         }
     });
 
-    ui->on_playlist_set([eventManager, soundManager, ui_weak](const int index) {
+    ui->on_playlist_set([eventManager, ui_weak](const int index) {
         if (const auto ui_strong = ui_weak.lock()) {
+            const Event event{ .eventTarget = 1, .eventId = 6, .eventData = index };
+            std::cout << UI_SENT_EVENT;
+            eventManager->fireEvent(event);
+        }
+    });
 
-            const Event event{.eventTarget = 1, .eventId = 6, .eventData = index};
+    ui->on_song_set([eventManager, ui_weak](const int index) {
+        if (const auto ui_strong = ui_weak.lock()) {
+            const auto& ui = *ui_strong;
 
+            ui->set_toggle_button(ICON_PLAY);
+
+            const Event event{ .eventTarget = 1, .eventId = 4, .eventData = index };
+            std::cout << UI_SENT_EVENT;
             eventManager->fireEvent(event);
         }
     });
@@ -102,22 +113,31 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                 slint::invoke_from_event_loop([ui_weak, soundManager]() {
                     if (auto ui_strong_opt = ui_weak.lock()) {
 
+                        // load current/first song in playlist
+
                         auto ui_strong = *ui_strong_opt;
 
                         const std::string soundName = soundManager->getSound(0)->getSoundName();
                         const slint::Image soundImage = soundManager->getSound(0)->getCoverImage();
 
-                        const auto songModel = std::make_shared<slint::VectorModel<PendingSong>>();
-                        songModel->push_back(PendingSong{
-                            .image = soundImage,
-                            .title = slint::SharedString(soundName)
-                        });
-
                         ui_strong->set_current_sound(slint::SharedString(soundName));
                         ui_strong->set_current_image(soundImage);
                         ui_strong->set_toggle_button(ICON_PLAY);
 
-                        ui_strong->set_pendingSongs(songModel);
+                        // load all other songs (if any)
+                        const auto pendingSongs = std::make_shared<slint::VectorModel<PendingSong>>();
+
+                        for (int i = 0; i < soundManager->getPlaylistSize(); ++i) {
+                            const std::string pendingSoundName = soundManager->getSound(i)->getSoundName();
+                            const slint::Image pendingSoundImage = soundManager->getSound(i)->getCoverImage();
+
+                            pendingSongs->push_back(PendingSong{
+                                .image = pendingSoundImage,
+                                .title = slint::SharedString(pendingSoundName)
+                            });
+                        }
+
+                        ui_strong->set_pendingSongs(pendingSongs);
                     }
                 });
                 std::cout << UI_EXECUTED_EVENT;

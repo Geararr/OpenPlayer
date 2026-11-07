@@ -87,6 +87,10 @@ int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
     }
 }
 
+size_t SoundManager::getPlaylistSize() {
+    return sounds.size();
+}
+
 Sound* SoundManager::getSound(const int soundIndex)
 {
     if (soundIndex < sounds.size()) {
@@ -183,6 +187,18 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
                 std::cout << SOUND_EXECUTED_EVENT;
             }
             break;
+        case 4:
+            std::cout << SOUND_RECIEVED_EVENT;
+            if (isSoundLoaded) {
+                unloadSound();
+                loadSound(getSound(event.eventData));
+                isPlaying = false;
+
+
+                std::cout << SOUND_EXECUTED_EVENT;
+            }
+            break;
+
         case 6:
             //  ui pauses music, makes image blank, makes name empty, loads new playlist
             std::cout << "Reloading playlist.\n";
