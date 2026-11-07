@@ -78,13 +78,13 @@ int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
                 std::cerr << "Failed to reload sound playlist -> Playlist empty" << '\n';
                 return 0;
             }
-
         }
     }
     else {
         std::cout << "Sounds already loaded.\n";
         return 0;
     }
+    return 0;
 }
 
 size_t SoundManager::getPlaylistSize() {

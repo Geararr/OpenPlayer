@@ -1,8 +1,12 @@
 #pragma once
 
+#include <taglib/fileref.h>
 #include <taglib/mpegfile.h>
 #include <taglib/id3v2tag.h>
 #include <taglib/attachedpictureframe.h>
+#include <taglib/mp4file.h>
+#include <taglib/mp4tag.h>
+#include <taglib/mp4item.h>
 
 #include <slint/slint.h>
 

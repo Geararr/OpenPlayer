@@ -28,31 +28,56 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
 {
     std::vector<uint8_t> imageBytes;
 
-    TagLib::MPEG::File file(filePath.c_str());
-    if (!file.isValid()) return imageBytes;
+    TagLib::FileRef f(filePath.c_str());
+    if (f.isNull() || !f.file()->isValid()) return imageBytes;
 
-    TagLib::ID3v2::Tag* id3v2Tag = file.ID3v2Tag();
-    if (!id3v2Tag) return imageBytes;
+    TagLib::File* filePtr = f.file();
 
-    const auto& frames = id3v2Tag->frameList("APIC");
-    if (frames.isEmpty()) return imageBytes;
-
-    for (auto* frame: frames)
+    // mp3
+    if (auto* mpegFile = dynamic_cast<TagLib::MPEG::File*>(filePtr))
     {
-        auto* picFrame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
-        if (picFrame && picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover)
+        if (mpegFile->ID3v2Tag())
         {
-            #if TAGLIB_VERSION >= 0x020000
-                auto dataView = picFrame->picture();
-                imageBytes.assign(dataView.begin(), dataView.end());
-            #else 
-                const TagLib::ByteVector& pictureData = picFrame->picture();
-                imageBytes.assign(pictureData.data(), pictureData.data() + pictureData.size());
-            #endif
-            break;
+            const auto& frames = mpegFile->ID3v2Tag()->frameList("APIC");
+            for (auto* frame : frames)
+            {
+                auto* picFrame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
+                if (picFrame && picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover)
+                {
+                    #if TAGLIB_VERSION >= 0x020000
+                        auto dataView = picFrame->picture();
+                        imageBytes.assign(dataView.begin(), dataView.end());
+                    #else
+                        const TagLib::ByteVector& data = picFrame->picture();
+                        imageBytes.assign(data.data(), data.data() + data.size());
+                    #endif
+                    break;
+                }
+            }
         }
     }
-
+    // mp4
+    else if (auto* mp4File = dynamic_cast<TagLib::MP4::File*>(filePtr))
+    {
+        if (mp4File->tag())
+        {
+            auto itemMap = mp4File->tag()->itemMap();
+            if (itemMap.contains("covr"))
+            {
+                auto coverList = itemMap["covr"].toCoverArtList();
+                if (!coverList.isEmpty())
+                {
+                    #if TAGLIB_VERSION >= 0x020000
+                        auto dataView = coverList.front().image();
+                        imageBytes.assign(dataView.begin(), dataView.end());
+                    #else
+                        const TagLib::ByteVector& data = coverList.front().data();
+                        imageBytes.assign(data.data(), data.data() + data.size());
+                    #endif
+                }
+            }
+        }
+    }
     return imageBytes;
 }
 
