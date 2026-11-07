@@ -1,15 +1,27 @@
 // STD stuff
 #include <vector>
+#include <thread>
 
 // Project Includes
 #include "uiManager.hpp"
 #include "soundManager.hpp"
 #include "eventManager.hpp"
+#include "EVENTS.h"
 
-void update(SoundManager* soundManager, EventManager* eventManager) {
+void update(SoundManager* soundManager, UiManager* uiManager, EventManager* eventManager) {
     while (true) {
-        std::vector<int> event = eventManager->getEvent(1);
-        soundManager->pollEvents(event[0], event[1]);
+        Event updateEvent = eventManager->getEvent(1);
+
+        std::cout << "Event target -> " << updateEvent.eventTarget << '\n';
+        std::cout << "Event id -> " << updateEvent.eventId << '\n';
+        std::cout << "Event data -> " << updateEvent.eventData << '\n';
+        soundManager->pollEvents(updateEvent, eventManager);
+
+        updateEvent = eventManager->getEvent(2);
+        std::cout << "Event target -> " << updateEvent.eventTarget << '\n';
+        std::cout << "Event id -> " << updateEvent.eventId << '\n';
+        std::cout << "Event data -> " << updateEvent.eventData << '\n';
+        uiManager->pollEvents(updateEvent, eventManager, soundManager);
     }
 }
 
@@ -22,9 +34,12 @@ int main() {
     EventManager eventManager;
     uiManager.setupEvents(&eventManager, &soundManager);
 
+    std::thread eventThread(update, &soundManager, &uiManager, &eventManager);
+
     uiManager.Run();
 
     soundManager.unloadSound(); // make sure no sounds are loaded
+    eventThread.join();
 
     return 0;
 }

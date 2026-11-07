@@ -1,6 +1,16 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
+#include <queue>
+#include <condition_variable>
+#include <utility>
+
+struct Event {
+    int eventTarget;
+    int eventId;
+    int eventData;
+};
 
 class EventManager
 {
@@ -29,11 +39,18 @@ class EventManager
         */
 
         // 0 = eventTarget 1 = eventId 2 = eventData
-        //110 = audio - toggle sound - no data
-        std::vector<int> currentEvent = {0, 0, 0};
+        //1, 1, 0 = audio - toggle sound - no data
+        //std::vector<int> currentEvent = {0, 0, 0};
+        std::queue<Event> eventQueue;
+        std::mutex eventQueueMutex;
+        std::condition_variable eventQueueCV;
 
     public:
-        void fireEvent(int eventTarget, int eventId, int eventData);
+        void fireEvent(Event event);
+        Event getEvent(int eventTarget);
 
-        std::vector<int> getEvent(int eventTarget);
+        bool isEventQueueEmpty();
+
+        std::mutex& getMutex();
+        std::condition_variable& getCV();
 };

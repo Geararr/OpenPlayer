@@ -49,7 +49,7 @@ std::vector<std::string> SoundManager::getPlaylists() {
     return playlists;
 }
 
-void SoundManager::reloadSounds(int playlist) {
+int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
     if (playlist != currentPlaylist) {
         std::string rPlaylist = getPlaylists().at(playlist);
 
@@ -57,25 +57,37 @@ void SoundManager::reloadSounds(int playlist) {
 
         if (std::filesystem::exists(musicDir) && std::filesystem::is_directory(musicDir))
         {
-            sounds.clear();
-            sounds.shrink_to_fit();
+            if (!std::filesystem::is_empty(musicDir)) {
+                sounds.clear();
+                sounds.shrink_to_fit();
 
-            for (const auto& entry : std::filesystem::directory_iterator(musicDir))
-            {
-                if (entry.is_regular_file())
+                for (const auto& entry : std::filesystem::directory_iterator(musicDir))
                 {
-                    sounds.push_back(std::make_unique<Sound>(entry.path().string(), entry.path().filename().string()));
+                    if (entry.is_regular_file())
+                    {
+                        sounds.push_back(std::make_unique<Sound>(entry.path().string(), entry.path().filename().string()));
+                    }
                 }
+
+                currentPlaylist = playlist;
+
+                std::cout << "Reloaded Sounds.\n";
+                return 1;
             }
+            else {
+                std::cerr << "Failed to reload sound playlist -> Playlist empty" << '\n';
+                return 0;
+            }
+
         }
-        std::cout << "Reloaded Sounds.\n";
     }
     else {
         std::cout << "Sounds already loaded.\n";
+        return 0;
     }
 }
 
-Sound* SoundManager::getSound(int soundIndex)
+Sound* SoundManager::getSound(const int soundIndex)
 {
     if (soundIndex < sounds.size()) {
         return sounds[soundIndex].get();
@@ -99,23 +111,29 @@ void SoundManager::loadSound(Sound* sound) // load all sound data into current s
 }
 void SoundManager::unloadSound()
 {
-    ma_sound_uninit(&currentSound);
-    std::cout << "Unloaded sound" << '\n';
-    isSoundLoaded = false;
+    if (isSoundLoaded) {
+        ma_sound_uninit(&currentSound);
+        std::cout << "Unloaded sound" << '\n';
+        isSoundLoaded = false;
+    }
 }
 void SoundManager::playSound()
 {
     if (isSoundLoaded) {
+        std::cout << "Playing sound\n";
         ma_sound_start(&currentSound);
     }
 }
-void SoundManager::setVolume(float volume)
+void SoundManager::setVolume(const float volume)
 {
     ma_sound_set_volume(&currentSound, volume);
 }
 void SoundManager::pauseSound()
 {
-    ma_sound_stop(&currentSound);
+    if (isSoundLoaded) {
+        std::cout << "Pausing sound\n";
+        ma_sound_stop(&currentSound);
+    }
 }
 
 // Status Helper
@@ -125,46 +143,61 @@ bool SoundManager::getPlayingStatus()
 }
 
 // Events
-void SoundManager::pollEvents(int event, int eventData)
+void SoundManager::pollEvents(const Event event, EventManager* eventManager)
 {
     float volume;
 
-    switch (event)
+    switch (event.eventId)
     {
         case 1:
+            std::cout << SOUND_RECIEVED_EVENT;
             if (isPlaying)
             {
                 pauseSound();
+                std::cout << SOUND_EXECUTED_EVENT;
                 isPlaying = false;
             }
             else
             {
                 playSound();
+                std::cout << SOUND_EXECUTED_EVENT;
                 isPlaying = true;
             }
             break;
 
         case 2:
+            std::cout << SOUND_RECIEVED_EVENT;
             volume = ma_sound_get_volume(&currentSound);
             if (volume < 1.0f)
             {
                 setVolume(volume + 0.1f);
+                std::cout << SOUND_EXECUTED_EVENT;
             }
-            std::cout << "Case 2\n";
             break;
         case 3:
+            std::cout << SOUND_RECIEVED_EVENT;
             volume = ma_sound_get_volume(&currentSound);
             if (volume > 0.0f)
             {
                 setVolume(volume - 0.1f);
+                std::cout << SOUND_EXECUTED_EVENT;
             }
-            std::cout << "Case 3\n";
             break;
         case 6:
             //  ui pauses music, makes image blank, makes name empty, loads new playlist
             std::cout << "Reloading playlist.\n";
-            unloadSound();
-            reloadSounds(eventData); // playlist index
+            std::cout << SOUND_RECIEVED_EVENT;
+            int result = reloadSounds(event.eventData, eventManager); // playlist index
+            if (result == 1) {
+                unloadSound();
+                loadSound(getSound(0));
+                playSound();
+                isPlaying = true;
+                std::cout << SOUND_EXECUTED_EVENT;
+                std::cout << SOUND_SENT_EVENT;
+                constexpr Event newEvent{.eventTarget = 2, .eventId = 1, .eventData = 0};
+                eventManager->fireEvent(newEvent);
+            }
     }
 }
 

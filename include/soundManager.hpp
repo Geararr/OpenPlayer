@@ -9,6 +9,7 @@
 #include "utils.hpp"
 
 #include "eventManager.hpp"
+#include "EVENTS.h"
 
 class Sound {
     private:
@@ -32,7 +33,7 @@ class SoundManager {
 
         bool isPlaying = false;
         bool isSoundLoaded = false;
-        int currentPlaylist = 0;
+        int currentPlaylist = -1;
 
         std::vector<std::unique_ptr<Sound>> sounds; // sounds in current playlist
 
@@ -41,7 +42,7 @@ class SoundManager {
         ~SoundManager(); // uninitialize sound engine
 
         std::vector<std::string> getPlaylists();
-        void reloadSounds(int playlist); // searches assets/music/playlist folder for any music and loads them inside sounds array
+        int reloadSounds(int playlist, EventManager* eventManager); // searches assets/music/playlist folder for any music and loads them inside sounds array
 
         Sound* getSound(int soundIndex);
 
@@ -54,5 +55,5 @@ class SoundManager {
 
         bool getPlayingStatus();
 
-        void pollEvents(int event, int eventData);
+        void pollEvents(Event event, EventManager* eventManager);
 };

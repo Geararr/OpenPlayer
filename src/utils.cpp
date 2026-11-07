@@ -72,7 +72,7 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
     );
 
     if (!decoded_pixels) {
-        std::cout << "Failed to decode compressed image data!\n";
+        std::cerr << "Failed to decode compressed image data!\n";
         return slint::Image();
     }
 
