@@ -11,6 +11,12 @@
 #include "eventManager.hpp"
 #include "EVENTS.h"
 
+struct SoundSync {
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool isFinished = false;
+};
+
 class Sound {
     private:
         std::string name;
@@ -34,8 +40,11 @@ class SoundManager {
         bool isPlaying = false;
         bool isSoundLoaded = false;
         int currentPlaylist = -1;
+        int currentSoundIndex = -1;
 
         std::vector<std::unique_ptr<Sound>> sounds; // sounds in current playlist
+
+        SoundSync sync;
 
     public:
         SoundManager(); // initialize sound engine
@@ -52,9 +61,18 @@ class SoundManager {
 
         void playSound(); // play current
         void setVolume(float volume);
+        void seekToTimestamp(double seconds);
         void pauseSound(); // pause current sound
 
+        void nextSound();
+        void previousSound();
+
         bool getPlayingStatus();
+
+        void setupSoundThread();
+        static void static_soundEndCallback(void* pUserData, ma_sound* sound);
+        void member_soundEndCallback();
+        void soundThreadUpdate();
 
         void pollEvents(Event event, EventManager* eventManager);
 };

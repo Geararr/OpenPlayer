@@ -33,10 +33,8 @@ class EventManager
         */
         /* 2:
         1 - reload playlist
-        2 - next song
-        3 - previous song
-        4 - set song
-        5 - change volume
+        2 - set song
+        3 - change volume
         */
 
         // 0 = eventTarget 1 = eventId 2 = eventData

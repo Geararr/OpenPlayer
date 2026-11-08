@@ -39,19 +39,30 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
         if (mpegFile->ID3v2Tag())
         {
             const auto& frames = mpegFile->ID3v2Tag()->frameList("APIC");
-            for (auto* frame : frames)
-            {
-                auto* picFrame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
-                if (picFrame && picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover)
-                {
+            if (!frames.isEmpty()) {
+                TagLib::ID3v2::AttachedPictureFrame* bestFrame = nullptr;
+
+                for (auto* frame : frames) {
+                    auto* picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
+                    if (picFrame) {
+                        if (picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover) {
+                            bestFrame = picFrame;
+                            break;
+                        }
+                        if (!bestFrame) {
+                            bestFrame = picFrame;
+                        }
+                    }
+                }
+
+                if (bestFrame) {
                     #if TAGLIB_VERSION >= 0x020000
-                        auto dataView = picFrame->picture();
-                        imageBytes.assign(dataView.begin(), dataView.end());
+                    auto dataView = bestFrame->picture();
+                    imageBytes.assign(dataView.begin(), dataView.end());
                     #else
-                        const TagLib::ByteVector& data = picFrame->picture();
+                        const TagLib::ByteVector& data = bestFrame->picture();
                         imageBytes.assign(data.data(), data.data() + data.size());
                     #endif
-                    break;
                 }
             }
         }

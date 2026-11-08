@@ -25,6 +25,12 @@ void update(SoundManager* soundManager, UiManager* uiManager, EventManager* even
     }
 }
 
+void soundUpdate(SoundManager* soundManager) {
+    while (true) {
+        soundManager->soundThreadUpdate();
+    }
+}
+
 int main() {
 
     SoundManager soundManager;
@@ -35,6 +41,7 @@ int main() {
     uiManager.setupEvents(&eventManager, &soundManager);
 
     std::thread eventThread(update, &soundManager, &uiManager, &eventManager);
+    std::thread soundThread(soundUpdate, &soundManager);
 
     uiManager.Run();
 

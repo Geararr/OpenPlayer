@@ -42,7 +42,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
                 else {
                     constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
                     eventManager->fireEvent(event);
-                    std::cout << UI_SENT_EVENT;
+                    std::cout << "ON_TOGGLE_MUSIC -> " << UI_SENT_EVENT;
                     ui->set_toggle_button(ICON_PAUSE);
                 }
             }
@@ -53,7 +53,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
                 else {
                     constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
                     eventManager->fireEvent(event);
-                    std::cout << UI_SENT_EVENT;
+                    std::cout << "ON_TOGGLE_MUSIC -> " << UI_SENT_EVENT;
                     ui->set_toggle_button(ICON_PLAY);
                 }
             }
@@ -63,7 +63,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
     ui->on_playlist_set([eventManager, ui_weak](const int index) {
         if (const auto ui_strong = ui_weak.lock()) {
             const Event event{ .eventTarget = 1, .eventId = 6, .eventData = index };
-            std::cout << UI_SENT_EVENT;
+            std::cout << "ON_PLAYLIST_SET -> " << UI_SENT_EVENT;
             eventManager->fireEvent(event);
         }
     });
@@ -75,7 +75,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
             ui->set_toggle_button(ICON_PLAY);
 
             const Event event{ .eventTarget = 1, .eventId = 4, .eventData = index };
-            std::cout << UI_SENT_EVENT;
+            std::cout << "ON_SONG_SET -> " << UI_SENT_EVENT;
             eventManager->fireEvent(event);
         }
     });
@@ -97,9 +97,9 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                 auto ui_weak = getWeakHandle();
 
                 slint::invoke_from_event_loop([ui_weak]() {
-                    if (auto ui_strong_opt = ui_weak.lock()) {
+                    if (const auto ui_strong_opt = ui_weak.lock()) {
 
-                        auto ui_strong = *ui_strong_opt;
+                        const auto& ui_strong = *ui_strong_opt;
 
                         ui_strong->set_current_sound("Playlist empty...");
                         ui_strong->set_current_image(slint::Image{});
@@ -111,11 +111,11 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                 auto ui_weak = getWeakHandle();
 
                 slint::invoke_from_event_loop([ui_weak, soundManager]() {
-                    if (auto ui_strong_opt = ui_weak.lock()) {
+                    if (const auto ui_strong_opt = ui_weak.lock()) {
 
                         // load current/first song in playlist
 
-                        auto ui_strong = *ui_strong_opt;
+                        const auto& ui_strong = *ui_strong_opt;
 
                         const std::string soundName = soundManager->getSound(0)->getSoundName();
                         const slint::Image soundImage = soundManager->getSound(0)->getCoverImage();
@@ -143,6 +143,27 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                 std::cout << UI_EXECUTED_EVENT;
             }
             break;
+
+        case 2: // set song
+            auto ui_weak = getWeakHandle();
+
+            std::cout << UI_RECIEVED_EVENT;
+
+            slint::invoke_from_event_loop([ui_weak, soundManager, event]() {
+                if (const auto ui_strong_opt = ui_weak.lock()) {
+
+                    const auto& ui_strong = *ui_strong_opt;
+
+                    const std::string soundName = soundManager->getSound(event.eventData)->getSoundName();
+                    const slint::Image soundImage = soundManager->getSound(event.eventData)->getCoverImage();
+
+                    ui_strong->set_current_sound(slint::SharedString(soundName));
+                    ui_strong->set_current_image(soundImage);
+                    ui_strong->set_toggle_button(ICON_PLAY);
+                }
+            });
+        std::cout << UI_EXECUTED_EVENT;
+        break;
     }
 }
 
