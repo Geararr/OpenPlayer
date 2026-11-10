@@ -28,16 +28,16 @@ if lxExportZip.exists():
 # WINDOWS X64 & X86
 if WINDOWS_X64_EXPORT_DIR.exists():
     shutil.rmtree(WINDOWS_X64_EXPORT_DIR)
-    print("Removed old Windows export")
+    print("Removed old Windows X64 export")
 if wdX64ExportZip.exists():
     wdX64ExportZip.unlink()
-    print("Removed old Windows export -> zip")
-if WINDOWS_X64_EXPORT_DIR.exists():
-    shutil.rmtree(WINDOWS_X64_EXPORT_DIR)
-    print("Removed old Windows export")
-if wdX64ExportZip.exists():
-    wdX64ExportZip.unlink()
-    print("Removed old Windows export -> zip")
+    print("Removed old Windows X64 export -> zip")
+if WINDOWS_X86_EXPORT_DIR.exists():
+    shutil.rmtree(WINDOWS_X86_EXPORT_DIR)
+    print("Removed old Windows X86 export")
+if wdX86ExportZip.exists():
+    wdX86ExportZip.unlink()
+    print("Removed old Windows X86 export -> zip")
 
 LINUX_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 

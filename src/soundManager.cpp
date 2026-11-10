@@ -39,11 +39,11 @@ SoundManager::SoundManager()
 std::vector<std::string> SoundManager::getPlaylists() {
     std::vector<std::string> playlists;
 
-    std::filesystem::path playlistDir = "./assets/music/";
-    //std::filesystem::path playlistDir = std::filesystem::path(SoundData::getExecDir() / "music/");
+    std::filesystem::path playlistDir = std::filesystem::path(SoundData::getExecDir() / "music/");
 
     for (const auto& entry : std::filesystem::directory_iterator(playlistDir)) {
         if (entry.is_directory()) {
+            std::cerr << entry.path() << '\n'; // TEMP DEBUG
             playlists.push_back(entry.path().filename().string());
         }
     }
@@ -55,7 +55,7 @@ int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
     if (playlist != currentPlaylist) {
         std::string rPlaylist = getPlaylists().at(playlist);
 
-        std::filesystem::path musicDir = std::format( "./assets/music/{}",  rPlaylist);
+        std::filesystem::path musicDir = SoundData::getExecDir() / std::format("music/{}", rPlaylist);
 
         if (std::filesystem::exists(musicDir) && std::filesystem::is_directory(musicDir))
         {

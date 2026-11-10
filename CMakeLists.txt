@@ -10,9 +10,19 @@ find_package(TagLib REQUIRED)
 if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
     message(STATUS "Cross-compiling for Windows: Fetching windows-compatible Slint sources.")
 
-    set(Rust_CARGO_TARGET "x86_64-pc-windows-gnu" CACHE STRING "" FORCE)
-    set(RUST_CARGO_TARGET "x86_64-pc-windows-gnu" CACHE STRING "" FORCE)
-    set(CARGO_BUILD_TARGET "x86_64-pc-windows-gnu" CACHE STRING "" FORCE)
+    if(CMAKE_CXX_COMPILER MATCHES "x86_64-w64-mingw32")
+        message(STATUS "COMPILING FOR WIN-X64")
+
+        set(TARGET_RUST_TRIPLET "x86_64-pc-windows-gnu")
+
+    elseif(CMAKE_CXX_COMPILER MATCHES "i686-w64-mingw32")
+        message(STATUS "COMPILING FOR WIN-X86")
+
+        set(TARGET_RUST_TRIPLET "i686-pc-windows-gnu")
+    endif()
+    set(Rust_CARGO_TARGET "${TARGET_RUST_TRIPLET}" CACHE STRING "" FORCE)
+    set(RUST_CARGO_TARGET "${TARGET_RUST_TRIPLET}"  CACHE STRING "" FORCE)
+    set(CARGO_BUILD_TARGET "${TARGET_RUST_TRIPLET}"  CACHE STRING "" FORCE)
 
     include(FetchContent)
     FetchContent_Declare(
