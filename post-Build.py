@@ -9,9 +9,11 @@ LINUX_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"
 
 WINDOWS_X64_BUILD_EXE = SCRIPT_DIR / "build/windows-rel-x64/OpenPlayer.exe"
 WINDOWS_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64"
+WINDOWS_X64_LIBSTDCPP_DLL = "/usr/x86_64-w64-mingw32/bin/libstdc++-6.dll"
 
 WINDOWS_X86_BUILD_EXE = SCRIPT_DIR / "build/windows-rel-x86/OpenPlayer.exe"
 WINDOWS_X86_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x86"
+WINDOWS_X86_LIBSTDCPP_DLL = "/usr/i686-w64-mingw32/bin/libstdc++-6.dll"
 
 lxExportZip = Path(f"{LINUX_EXPORT_DIR}.zip")
 wdX64ExportZip = Path(f"{WINDOWS_X64_EXPORT_DIR}.zip")
@@ -68,6 +70,10 @@ else:
     print(f"Error -> Windows x86 binary not found at: {WINDOWS_X86_BUILD_EXE.relative_to(SCRIPT_DIR)}")
     sys.exit()
 
+# copy dlls into windows release folders
+shutil.copy(str(WINDOWS_X64_LIBSTDCPP_DLL), str(WINDOWS_X64_EXPORT_DIR))
+shutil.copy(str(WINDOWS_X86_LIBSTDCPP_DLL), str(WINDOWS_X86_EXPORT_DIR))
+
 MUSIC_FOLDER_DIR = SCRIPT_DIR / "assets/music"
 
 LINUX_MUSIC_DEST = LINUX_EXPORT_DIR / "music"
@@ -79,20 +85,20 @@ shutil.copytree(str(MUSIC_FOLDER_DIR), str(WINDOWS_X64_MUSIC_DEST))
 shutil.copytree(str(MUSIC_FOLDER_DIR), str(WINDOWS_X86_MUSIC_DEST))
 
 shutil.make_archive(
-    base_name=str("EXPORT/OpenPlayer_Linux"),
+    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"),
     format="zip",
     root_dir=str(LINUX_EXPORT_DIR)
 )
 print("Compressed OpenPlayer_Linux.zip")
 
 shutil.make_archive(
-    base_name=str("EXPORT/OpenPlayer_Win_x64"),
+    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64"),
     format="zip",
     root_dir=str(WINDOWS_X64_EXPORT_DIR)
 )
 print("Compressed OpenPlayer_Win_x64.zip")
 shutil.make_archive(
-    base_name=str("EXPORT/OpenPlayer_Win_x86"),
+    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x86"),
     format="zip",
     root_dir=str(WINDOWS_X86_EXPORT_DIR)
 )
