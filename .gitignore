@@ -1,5 +1,7 @@
 cmake-build-*
-build/
 .cmake/
 imgui.ini
 EXPORT/
+.idea
+assets/
+build/
