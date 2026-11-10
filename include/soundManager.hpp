@@ -72,7 +72,9 @@ class SoundManager {
         void setupSoundThread();
         static void static_soundEndCallback(void* pUserData, ma_sound* sound);
         void member_soundEndCallback();
-        void soundThreadUpdate();
+        void soundThreadUpdate(const std::atomic<bool>* programEnd);
 
         void pollEvents(Event event, EventManager* eventManager);
+
+        void END();
 };

@@ -44,3 +44,9 @@ std::mutex& EventManager::getMutex() {
 std::condition_variable& EventManager::getCV() {
     return eventQueueCV;
 }
+
+void EventManager::END() {
+    constexpr Event endEvent{ .eventTarget = -1, .eventId = -1, .eventData = -1 };
+
+    fireEvent(endEvent);
+}

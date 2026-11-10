@@ -4,6 +4,7 @@
 #include <format>
 #include <thread>
 #include "IconsProto.h"
+#include "utils.hpp"
 
 Sound::Sound(std::string soundPath, std::string soundName)
 {
@@ -38,7 +39,8 @@ SoundManager::SoundManager()
 std::vector<std::string> SoundManager::getPlaylists() {
     std::vector<std::string> playlists;
 
-    std::filesystem::path playlistDir = std::filesystem::path("./assets/music/");
+    std::filesystem::path playlistDir = "./assets/music/";
+    //std::filesystem::path playlistDir = std::filesystem::path(SoundData::getExecDir() / "music/");
 
     for (const auto& entry : std::filesystem::directory_iterator(playlistDir)) {
         if (entry.is_directory()) {
@@ -53,7 +55,7 @@ int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
     if (playlist != currentPlaylist) {
         std::string rPlaylist = getPlaylists().at(playlist);
 
-        std::filesystem::path musicDir = std::format("./assets/music/{}", rPlaylist);
+        std::filesystem::path musicDir = std::format( "./assets/music/{}",  rPlaylist);
 
         if (std::filesystem::exists(musicDir) && std::filesystem::is_directory(musicDir))
         {
@@ -217,11 +219,15 @@ void SoundManager::member_soundEndCallback() {
     sync.cv.notify_one();
 }
 
-void SoundManager::soundThreadUpdate() {
+void SoundManager::soundThreadUpdate(const std::atomic<bool>* programEnd) {
     std::cout << "Sound Update Thread -> Waiting for sound to complete...\n";
 
     std::unique_lock<std::mutex> lock(sync.mtx);
     sync.cv.wait(lock, [this] {return sync.isFinished; });
+
+    if (programEnd->load()) {
+        return;
+    }
 
     sync.isFinished = false;
 
@@ -304,6 +310,16 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
                 eventManager->fireEvent(newEvent);
             }
     }
+}
+
+void SoundManager::END() {
+    {
+        std::lock_guard<std::mutex> lock(sync.mtx);
+
+        sync.isFinished = true;
+    }
+
+    sync.cv.notify_all();
 }
 
 // destructor

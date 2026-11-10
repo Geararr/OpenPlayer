@@ -52,4 +52,6 @@ class EventManager
 
         std::mutex& getMutex();
         std::condition_variable& getCV();
+
+        void END();
 };

@@ -14,11 +14,15 @@
 #include <cstdint>
 #include <iostream>
 
+#include <filesystem>
+
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
 
 #elif defined(__linux__)
     #include <sys/sysinfo.h>
+    #include <unistd.h>
+    #include <limits.h>
 
 #endif
 
@@ -29,4 +33,5 @@ namespace Resources {
 namespace SoundData {
     std::vector<uint8_t> GetAudioCoverBytes(const std::string& filePath);
     slint::Image GetImageFromBytes(const std::vector<uint8_t>& imageBytes);
+    std::filesystem::path getExecDir();
 }
