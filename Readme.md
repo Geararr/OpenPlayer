@@ -7,4 +7,4 @@
 #### 5. Get program end to end all threads and exit succesfully [TODO]
 #### 6. Eventually download music from online idk [TODO]
 
-### Do not be stupid - this program is self-explanatory
+### ya
