@@ -26,6 +26,10 @@ export component OpenPlayerUI inherits Window {
 
     callback playlist_set(int);
     callback song_set(int);
+
+    callback next-song();
+    callback previous-song();
+
     callback toggle-music();
 
     VerticalBox {
@@ -46,10 +50,30 @@ export component OpenPlayerUI inherits Window {
             font-size: 24px;
         }
 
-        Button {
-            text: toggle-button;
-            clicked() => {
-                toggle-music();
+        HorizontalBox {
+            alignment: center;
+            cross-axis-alignment: center;
+            spacing: 10px;
+
+            Button {
+                text: "\u{000F04AE}";
+                clicked() => {
+                    previous-song();
+                }
+            }
+
+            Button {
+                text: toggle-button;
+                clicked() => {
+                    toggle-music();
+                }
+            }
+
+            Button {
+                text: "\u{000F04AD}";
+                clicked() => {
+                    next-song();
+                }
             }
         }
 

@@ -35,35 +35,29 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
 
             const auto& ui = *ui_strong;
 
-            if (ui->get_toggle_button() == ICON_PLAY) {
-                if (soundManager->getSound(0) == nullptr) {
-                    std::cout << "Playlist empty/No sound selected.\n";
-                }
-                else {
-                    constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
-                    eventManager->fireEvent(event);
-                    std::cout << "ON_TOGGLE_MUSIC -> " << UI_SENT_EVENT;
-                    ui->set_toggle_button(ICON_PAUSE);
-                }
-            }
-            else {
-                if (soundManager->getSound(0) == nullptr) {
-                    std::cout << "Playlist empty/No sound selected.\n";
-                }
-                else {
-                    constexpr Event event{ .eventTarget = 1, .eventId = 1, .eventData = 0 };
-                    eventManager->fireEvent(event);
-                    std::cout << "ON_TOGGLE_MUSIC -> " << UI_SENT_EVENT;
+            if (soundManager->getSound(0) != nullptr) {
+                Event event{ .eventTarget = SoundTarget, .eventId = -1, .eventData = 0 };
+
+                if (soundManager->getPlayingStatus()) { // playing
+                    event.eventId = PauseSound;
                     ui->set_toggle_button(ICON_PLAY);
                 }
+                else { // paused
+                    event.eventId = PlaySound;
+                    ui->set_toggle_button(ICON_PAUSE);
+                }
+
+                eventManager->fireEvent(event);
+            }
+            else {
+                std::cout << "Playlist empty/No sound selected\n";
             }
         }
     });
 
     ui->on_playlist_set([eventManager, ui_weak](const int index) {
         if (const auto ui_strong = ui_weak.lock()) {
-            const Event event{ .eventTarget = 1, .eventId = 6, .eventData = index };
-            std::cout << "ON_PLAYLIST_SET -> " << UI_SENT_EVENT;
+            const Event event{ .eventTarget = SoundTarget, .eventId = ReloadPlaylist, .eventData = index };
             eventManager->fireEvent(event);
         }
     });
@@ -72,11 +66,31 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
         if (const auto ui_strong = ui_weak.lock()) {
             const auto& ui = *ui_strong;
 
-            ui->set_toggle_button(ICON_PLAY);
-
-            const Event event{ .eventTarget = 1, .eventId = 4, .eventData = index };
-            std::cout << "ON_SONG_SET -> " << UI_SENT_EVENT;
+            const Event event{ .eventTarget = SoundTarget, .eventId = SelectSound, .eventData = index };
             eventManager->fireEvent(event);
+        }
+    });
+
+    ui->on_next_song([eventManager, soundManager, ui_weak]() {
+        if (const auto ui_strong = ui_weak.lock()) {
+            if (soundManager->getSound(0) != nullptr) {
+                constexpr Event event{ .eventTarget = SoundTarget, .eventId = NextSound, .eventData = 0 };
+                eventManager->fireEvent(event);
+            }
+            else {
+                std::cout << "Playlist empty/No sound selected\n";
+            }
+        }
+    });
+    ui->on_previous_song([eventManager, soundManager, ui_weak]() {
+        if (const auto ui_strong = ui_weak.lock()) {
+            if (soundManager->getSound(0) != nullptr) {
+                constexpr Event event{ .eventTarget = SoundTarget, .eventId = PreviousSound, .eventData = 0 };
+                eventManager->fireEvent(event);
+            }
+            else {
+                std::cout << "Playlist empty/No sound selected\n";
+            }
         }
     });
 }
@@ -87,9 +101,7 @@ slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {
 
 void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundManager* soundManager) { // we have to use slint::invoke_from_event_loop because func is on backround thread
     switch (event.eventId) {
-        case 1: // reload playlist
-
-            std::cout << UI_RECIEVED_EVENT;
+        case ReloadPlaylist: // reload playlist
 
             if (soundManager->getSound(0) == nullptr) {
                 std::cout << "Checked playlist as empty.\n";
@@ -140,14 +152,11 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                         ui_strong->set_pendingSongs(pendingSongs);
                     }
                 });
-                std::cout << UI_EXECUTED_EVENT;
             }
             break;
 
-        case 2: // set song
+        case SelectSound: // set song or select sound
             auto ui_weak = getWeakHandle();
-
-            std::cout << UI_RECIEVED_EVENT;
 
             slint::invoke_from_event_loop([ui_weak, soundManager, event]() {
                 if (const auto ui_strong_opt = ui_weak.lock()) {
@@ -159,10 +168,8 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
 
                     ui_strong->set_current_sound(slint::SharedString(soundName));
                     ui_strong->set_current_image(soundImage);
-                    ui_strong->set_toggle_button(ICON_PLAY);
                 }
             });
-        std::cout << UI_EXECUTED_EVENT;
         break;
     }
 }

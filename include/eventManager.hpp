@@ -5,6 +5,7 @@
 #include <queue>
 #include <condition_variable>
 #include <utility>
+#include "EVENTS.h"
 
 struct Event {
     int eventTarget;
@@ -15,27 +16,6 @@ struct Event {
 class EventManager
 {
     private:
-    
-        /*
-            type = system-type
-
-            1 - Audio
-            2 - UI
-        */
-
-        /* 1:
-        1 - toggle sound
-        2 - increase volume
-        3 - decrease volume
-        4 - next song
-        5 - previous song
-        6 - Reload Playlist
-        */
-        /* 2:
-        1 - reload playlist
-        2 - set song
-        3 - change volume
-        */
 
         // 0 = eventTarget 1 = eventId 2 = eventData
         //1, 1, 0 = audio - toggle sound - no data
@@ -46,7 +26,7 @@ class EventManager
 
     public:
         void fireEvent(Event event);
-        Event getEvent(int eventTarget);
+        Event getEvent(EventTarget eventTarget);
 
         bool isEventQueueEmpty();
 

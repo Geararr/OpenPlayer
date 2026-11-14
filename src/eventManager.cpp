@@ -9,7 +9,7 @@ void EventManager::fireEvent(const Event event) {
     eventQueueCV.notify_one();
 }
 
-Event EventManager::getEvent(const int eventTarget) {
+Event EventManager::getEvent(const EventTarget eventTarget) {
     Event event{.eventTarget = 0, .eventId = 0, .eventData = 0};
 
     auto token = std::unique_lock<std::mutex>(eventQueueMutex);

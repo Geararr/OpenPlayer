@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 #include "utils.hpp"
 
@@ -25,7 +26,7 @@ class Sound {
         slint::Image coverImage;
 
     public:
-        Sound(std::string soundPath, std::string soundName);
+        Sound(const std::string& soundPath, const std::string& soundName);
         std::string getSoundPath();
         std::string getSoundName();
         slint::Image getCoverImage();
@@ -53,10 +54,10 @@ class SoundManager {
         std::vector<std::string> getPlaylists();
         int reloadSounds(int playlist, EventManager* eventManager); // searches assets/music/playlist folder for any music and loads them inside sounds array
 
-        size_t getPlaylistSize();
-        Sound* getSound(int soundIndex);
+        [[nodiscard]] size_t getPlaylistSize() const;
+        Sound* getSound(int soundIndex) const;
 
-        void loadSound(Sound* sound); // change current sound
+        void loadSound(int soundIndex); // change current sound
         void unloadSound(); // clean up current sound to load a new sound
 
         void playSound(); // play current
@@ -67,12 +68,12 @@ class SoundManager {
         void nextSound();
         void previousSound();
 
-        bool getPlayingStatus();
+        [[nodiscard]] bool getPlayingStatus() const;
 
         void setupSoundThread();
         static void static_soundEndCallback(void* pUserData, ma_sound* sound);
         void member_soundEndCallback();
-        void soundThreadUpdate(const std::atomic<bool>* programEnd);
+        void soundThreadUpdate(const std::atomic<bool>* programEnd, const std::function<void(const Event&)>& onEvent);
 
         void pollEvents(Event event, EventManager* eventManager);
 

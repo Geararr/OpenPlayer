@@ -13,22 +13,22 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
+#include <algorithm>
 
 #include <filesystem>
 
-#if defined(_WIN32) || defined(_WIN64)
-    #include <windows.h>
-
-#elif defined(__linux__)
-    #include <sys/sysinfo.h>
-    #include <unistd.h>
-    #include <limits.h>
-
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
-
-namespace Resources {
-    unsigned long long GetAvailableMemory();
-}
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#include <climits>
+#endif
 
 namespace SoundData {
     std::vector<uint8_t> GetAudioCoverBytes(const std::string& filePath);

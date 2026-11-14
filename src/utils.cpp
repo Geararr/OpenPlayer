@@ -5,27 +5,11 @@
 
 #include <slint/slint.h>
 
-unsigned long long Resources::GetAvailableMemory()
-{
-        #if defined(_WIN32) || defined(_WIN64)
-            MEMORYSTATUSEX memInfo;
-            memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-            if (GlobalMemoryStatusEx(&memInfo))
-            {
-                return memInfo.ullAvailPhys;
-            }
-        #elif defined(__linux__)
-            struct sysinfo memInfo;
-            if (sysinfo(&memInfo) == 0)
-            {
-                return (unsigned long long)memInfo.freeram * memInfo.mem_unit;
-            }
-        #endif
-            return 0;
-}
-
 std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
 {
+    const size_t filenamePos = filePath.find_last_of('/');
+    const std::string filename = (filenamePos != std::string::npos) ? filePath.substr(filenamePos + 1) : filePath;
+
     std::vector<uint8_t> imageBytes;
 
     TagLib::FileRef f(filePath.c_str());
@@ -34,42 +18,49 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
     TagLib::File* filePtr = f.file();
 
     // mp3
-    if (auto* mpegFile = dynamic_cast<TagLib::MPEG::File*>(filePtr))
+    if (filePath.size() >= 4 && filePath.substr(filePath.size() - 4) == ".mp3")
     {
-        if (mpegFile->ID3v2Tag())
-        {
-            const auto& frames = mpegFile->ID3v2Tag()->frameList("APIC");
-            if (!frames.isEmpty()) {
-                TagLib::ID3v2::AttachedPictureFrame* bestFrame = nullptr;
 
-                for (auto* frame : frames) {
-                    auto* picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
-                    if (picFrame) {
-                        if (picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover) {
-                            bestFrame = picFrame;
-                            break;
-                        }
-                        if (!bestFrame) {
-                            bestFrame = picFrame;
+        if (auto* mpegFile = dynamic_cast<TagLib::MPEG::File*>(f.file()))
+        {
+            auto* id3v2Tag = mpegFile->ID3v2Tag();
+            if (id3v2Tag)
+            {
+                const auto& frames = id3v2Tag->frameList("APIC");
+                if (!frames.isEmpty()) {
+                    TagLib::ID3v2::AttachedPictureFrame* bestFrame = nullptr;
+
+                    for (auto* frame : frames) {
+                        auto* picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
+                        if (picFrame) {
+                            if (picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover) {
+                                bestFrame = picFrame;
+                                break;
+                            }
+                            if (!bestFrame) {
+                                bestFrame = picFrame;
+                            }
                         }
                     }
-                }
 
-                if (bestFrame) {
-                    #if TAGLIB_VERSION >= 0x020000
-                    auto dataView = bestFrame->picture();
-                    imageBytes.assign(dataView.begin(), dataView.end());
-                    #else
-                        const TagLib::ByteVector& data = bestFrame->picture();
-                        imageBytes.assign(data.data(), data.data() + data.size());
-                    #endif
+                    if (bestFrame) {
+                        #if TAGLIB_VERSION >= 0x020000
+                            auto dataView = bestFrame->picture();
+                            imageBytes.assign(dataView.begin(), dataView.end());
+                        #else
+                            const TagLib::ByteVector& data = bestFrame->picture();
+                            imageBytes.assign(data.data(), data.data() + data.size());
+                        #endif
+                    }
                 }
             }
         }
     }
+
     // mp4
     else if (auto* mp4File = dynamic_cast<TagLib::MP4::File*>(filePtr))
     {
+        std::cout << "Getting audio cover bytes for mp4 -> " << filename << '\n';
         if (mp4File->tag())
         {
             auto itemMap = mp4File->tag()->itemMap();
@@ -78,6 +69,7 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
                 auto coverList = itemMap["covr"].toCoverArtList();
                 if (!coverList.isEmpty())
                 {
+                    std::cout << "Cover list not empty\n";
                     #if TAGLIB_VERSION >= 0x020000
                         auto dataView = coverList.front().image();
                         imageBytes.assign(dataView.begin(), dataView.end());
