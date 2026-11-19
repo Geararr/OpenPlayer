@@ -8,19 +8,16 @@
 #include <atomic>
 #include <chrono>
 
-// ui->set_current_sound(soundManager->getSound(0)->getSoundName().data());
-// ui->set_current_image(soundManager->getSound(0)->getCoverImage());
-
 UiManager::UiManager(SoundManager* soundManager) : ui(OpenPlayerUI::create()) {
     ui->set_current_sound("No song selected...");
     ui->set_current_image(slint::Image{});
     ui->set_toggle_button(ICON_PLAY);
 
-    const auto playlist_model = std::make_shared<slint::VectorModel<Playlist>>();
+    ui->set_is_playing(false);
+
+    const auto playlist_model = std::make_shared<slint::VectorModel<slint::SharedString>>();
     for (const auto& playlist : soundManager->getPlaylists()) {
-        playlist_model->push_back(Playlist{
-            .title = playlist.data()
-        });
+        playlist_model->push_back(playlist.data());
     }
 
     ui->set_playlists(playlist_model);
@@ -35,63 +32,43 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
 
             const auto& ui = *ui_strong;
 
-            if (soundManager->getSound(0) != nullptr) {
-                Event event{ .eventTarget = SoundTarget, .eventId = -1, .eventData = 0 };
+            Event event{ .eventData = 0, .eventTarget = SoundTarget, .eventId = -1 };
 
-                if (soundManager->getPlayingStatus()) { // playing
-                    event.eventId = PauseSound;
-                    ui->set_toggle_button(ICON_PLAY);
-                }
-                else { // paused
-                    event.eventId = PlaySound;
-                    ui->set_toggle_button(ICON_PAUSE);
-                }
-
-                eventManager->fireEvent(event);
+            if (soundManager->getPlayingStatus()) { // playing
+                event.eventId = PauseSound;
+                ui->set_toggle_button(ICON_PLAY);
+                ui->set_is_playing(false);
             }
-            else {
-                std::cout << "Playlist empty/No sound selected\n";
+            else { // paused
+                event.eventId = PlaySound;
+                ui->set_toggle_button(ICON_PAUSE);
+                ui->set_is_playing(true);
             }
+            eventManager->fireEvent(event);
         }
     });
 
     ui->on_playlist_set([eventManager, ui_weak](const int index) {
-        if (const auto ui_strong = ui_weak.lock()) {
-            const Event event{ .eventTarget = SoundTarget, .eventId = ReloadPlaylist, .eventData = index };
-            eventManager->fireEvent(event);
-        }
+        eventManager->fireEvent({ .eventData = index, .eventTarget = SoundTarget, .eventId = ReloadPlaylist });
     });
 
     ui->on_song_set([eventManager, ui_weak](const int index) {
-        if (const auto ui_strong = ui_weak.lock()) {
-            const auto& ui = *ui_strong;
-
-            const Event event{ .eventTarget = SoundTarget, .eventId = SelectSound, .eventData = index };
-            eventManager->fireEvent(event);
-        }
+        eventManager->fireEvent({ .eventData = index, .eventTarget = SoundTarget, .eventId = SelectSound });
     });
 
     ui->on_next_song([eventManager, soundManager, ui_weak]() {
-        if (const auto ui_strong = ui_weak.lock()) {
-            if (soundManager->getSound(0) != nullptr) {
-                constexpr Event event{ .eventTarget = SoundTarget, .eventId = NextSound, .eventData = 0 };
-                eventManager->fireEvent(event);
-            }
-            else {
-                std::cout << "Playlist empty/No sound selected\n";
-            }
-        }
+        eventManager->fireEvent({ .eventData = 0, .eventTarget = SoundTarget, .eventId = NextSound });
     });
     ui->on_previous_song([eventManager, soundManager, ui_weak]() {
-        if (const auto ui_strong = ui_weak.lock()) {
-            if (soundManager->getSound(0) != nullptr) {
-                constexpr Event event{ .eventTarget = SoundTarget, .eventId = PreviousSound, .eventData = 0 };
-                eventManager->fireEvent(event);
-            }
-            else {
-                std::cout << "Playlist empty/No sound selected\n";
-            }
-        }
+        eventManager->fireEvent({ .eventData = 0, .eventTarget = SoundTarget, .eventId = PreviousSound });
+    });
+
+    // Sound & Volume
+    ui->on_seek([eventManager, soundManager, ui_weak](const float time) {
+        eventManager->fireEvent({ .eventData = time, .eventTarget = SoundTarget, .eventId = Seek});
+    });
+    ui->on_volume_changed([eventManager, soundManager, ui_weak](const float volume) {
+        eventManager->fireEvent({ .eventData = volume, .eventTarget = SoundTarget, .eventId = SetVolume });
     });
 }
 
@@ -100,77 +77,144 @@ slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {
 }
 
 void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundManager* soundManager) { // we have to use slint::invoke_from_event_loop because func is on backround thread
+
     switch (event.eventId) {
-        case ReloadPlaylist: // reload playlist
+        case ReloadPlaylist: {
+            // reload playlist
 
-            if (soundManager->getSound(0) == nullptr) {
+            struct TrackSnapshot {
+                std::string name;
+                slint::Image image;
+            };
+
+            std::vector<TrackSnapshot> tracks;
+            const size_t count = soundManager->getPlaylistSize();
+            tracks.reserve(count);
+
+            for (int i = 0; i < count; ++i) {
+                if (auto* s = soundManager->getSound(i)) {
+                    tracks.push_back({ .name = s->getSoundName(), .image = s->getCoverImage()});
+                }
+            }
+
+            auto ui_weak = getWeakHandle();
+
+            if (tracks.empty()) {
                 std::cout << "Checked playlist as empty.\n";
-
-                auto ui_weak = getWeakHandle();
 
                 slint::invoke_from_event_loop([ui_weak]() {
                     if (const auto ui_strong_opt = ui_weak.lock()) {
-
                         const auto& ui_strong = *ui_strong_opt;
 
                         ui_strong->set_current_sound("Playlist empty...");
                         ui_strong->set_current_image(slint::Image{});
                         ui_strong->set_toggle_button(ICON_PLAY);
+                        ui_strong->set_is_playing(false);
+
+                        ui_strong->set_pendingSongs(std::make_shared<slint::VectorModel<PendingSong>>());
+                        ui_strong->set_duration(0.0f);
+                        ui_strong->set_progress(0.0f);
+                        ui_strong->set_current_time_text(slint::SharedString("0:00"));
+                        ui_strong->set_total_time_text(slint::SharedString("0:00"));
+                        ui_strong->set_playback_progress(0.0f);
                     }
                 });
             }
             else {
-                auto ui_weak = getWeakHandle();
+                const float duration = soundManager->getSoundDuration();
+                const auto durationStr = soundManager->getSoundDurationString();
 
-                slint::invoke_from_event_loop([ui_weak, soundManager]() {
+                slint::invoke_from_event_loop([ui_weak, tracks = std::move(tracks), duration, durationStr]() {
                     if (const auto ui_strong_opt = ui_weak.lock()) {
-
-                        // load current/first song in playlist
-
                         const auto& ui_strong = *ui_strong_opt;
 
-                        const std::string soundName = soundManager->getSound(0)->getSoundName();
-                        const slint::Image soundImage = soundManager->getSound(0)->getCoverImage();
-
-                        ui_strong->set_current_sound(slint::SharedString(soundName));
-                        ui_strong->set_current_image(soundImage);
+                        // load current/first song in playlist
+                        ui_strong->set_current_sound(slint::SharedString(tracks[0].name));
+                        ui_strong->set_current_image(tracks[0].image);
                         ui_strong->set_toggle_button(ICON_PLAY);
+                        ui_strong->set_is_playing(false);
 
                         // load all other songs (if any)
                         const auto pendingSongs = std::make_shared<slint::VectorModel<PendingSong>>();
-
-                        for (int i = 0; i < soundManager->getPlaylistSize(); ++i) {
-                            const std::string pendingSoundName = soundManager->getSound(i)->getSoundName();
-                            const slint::Image pendingSoundImage = soundManager->getSound(i)->getCoverImage();
-
+                        for (const auto& track : tracks) {
                             pendingSongs->push_back(PendingSong{
-                                .image = pendingSoundImage,
-                                .title = slint::SharedString(pendingSoundName)
+                                .image = track.image,
+                                .title = static_cast<slint::SharedString>(track.name)
                             });
                         }
-
                         ui_strong->set_pendingSongs(pendingSongs);
+
+                        // setup sound length for seeking
+                        ui_strong->set_duration(duration);
+                        ui_strong->set_progress(0.0f);
+                        ui_strong->set_current_time_text(slint::SharedString("0:00"));
+                        ui_strong->set_total_time_text(durationStr);
+                        ui_strong->set_playback_progress(0.0f);
                     }
                 });
             }
-            break;
+        } break;
 
-        case SelectSound: // set song or select sound
+        case SelectSound: {
+            // set song or select sound
+            const int index = std::get<int>(event.eventData);
+            auto* selectedSound = soundManager->getSound(index);
+
+            if (selectedSound == nullptr) {
+                std::cerr << "Selected sound -> invalid index " << index << '\n';
+                break;
+            }
+
+            const std::string soundName = selectedSound->getSoundName();
+            const slint::Image soundImage = selectedSound->getCoverImage();
+            const float duration = soundManager->getSoundDuration();
+            const auto durationStr = soundManager->getSoundDurationString();
+
             auto ui_weak = getWeakHandle();
 
-            slint::invoke_from_event_loop([ui_weak, soundManager, event]() {
+            slint::invoke_from_event_loop([ui_weak, soundName, soundImage, duration, durationStr]() {
                 if (const auto ui_strong_opt = ui_weak.lock()) {
 
                     const auto& ui_strong = *ui_strong_opt;
 
-                    const std::string soundName = soundManager->getSound(event.eventData)->getSoundName();
-                    const slint::Image soundImage = soundManager->getSound(event.eventData)->getCoverImage();
-
                     ui_strong->set_current_sound(slint::SharedString(soundName));
                     ui_strong->set_current_image(soundImage);
+
+                    // setup sound length for seeking
+                    ui_strong->set_duration(duration);
+                    ui_strong->set_progress(0.0f);
+                    ui_strong->set_current_time_text(slint::SharedString("0:00"));
+                    ui_strong->set_total_time_text(durationStr);
+                    ui_strong->set_playback_progress(0.0f);
                 }
             });
-        break;
+        } break;
+
+        case StartProgressTimer: {
+            auto ui_weak = getWeakHandle();
+
+            slint::invoke_from_event_loop([this, ui_weak, soundManager]() {
+                progressCheckTimer.start(
+                    slint::TimerMode::Repeated,
+                    std::chrono::milliseconds(200),
+                    [ui_weak, soundManager]() {
+                        if (auto ui_strong_opt = ui_weak.lock()) {
+                            const auto& ui_strong = *ui_strong_opt;
+                            ui_strong->set_playback_progress(soundManager->getSoundProgress());
+                            ui_strong->set_current_time_text(soundManager->getSoundProgressString());
+                        }
+                    }
+                );
+            });
+        } break;
+
+        case StopProgressTimer: {
+            auto ui_weak = getWeakHandle();
+
+            slint::invoke_from_event_loop([this, ui_weak, soundManager]() {
+                progressCheckTimer.stop();
+            });
+        } break;
     }
 }
 

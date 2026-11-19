@@ -5,12 +5,13 @@
 #include <queue>
 #include <condition_variable>
 #include <utility>
+#include <variant>
 #include "EVENTS.h"
 
 struct Event {
+    std::variant<int, float> eventData;
     int eventTarget;
     int eventId;
-    int eventData;
 };
 
 class EventManager
@@ -26,7 +27,7 @@ class EventManager
 
     public:
         void fireEvent(Event event);
-        Event getEvent(EventTarget eventTarget);
+        Event getEvent();
 
         bool isEventQueueEmpty();
 

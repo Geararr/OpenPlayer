@@ -12,24 +12,22 @@ std::atomic<bool> programEnd(false);
 
 void eventUpdate(SoundManager *soundManager, UiManager *uiManager, EventManager *eventManager) {
   while (!programEnd.load()) {
-    Event updateEvent = eventManager->getEvent(SoundTarget);
+    const Event updateEvent = eventManager->getEvent();
 
-    soundManager->pollEvents(updateEvent, eventManager);
-
-    updateEvent = eventManager->getEvent(UiTarget);
-
-    uiManager->pollEvents(updateEvent, eventManager, soundManager);
+    if (!programEnd.load()) {
+      switch (updateEvent.eventTarget) {
+        case SoundTarget: soundManager->pollEvents(updateEvent); break;
+        case UiTarget: uiManager->pollEvents(updateEvent, eventManager, soundManager); break;
+      }
+    }
   }
   std::cout << "Event thread end\n";
 }
 
-void soundUpdate(SoundManager **soundManagerPtr, std::function<void(const Event&)> onEvent) {
-  SoundManager localSoundManager;
-
-  *soundManagerPtr = &localSoundManager;
+void soundUpdate(SoundManager *soundManager) {
 
   while (!programEnd.load()) {
-    localSoundManager.soundThreadUpdate(&programEnd, onEvent);
+    soundManager->soundThreadUpdate(&programEnd);
   }
   std::cout << "Sound thread end\n";
 }
@@ -42,36 +40,31 @@ int main() {
 
   EventManager eventManager;
 
-  SoundManager *soundManagerShared = nullptr;
+  SoundManager soundManager{&eventManager};
 
-  std::thread soundThread(soundUpdate, &soundManagerShared, [&eventManager](const Event& e) {
-    eventManager.fireEvent(e);
-  });
+  std::thread soundThread(soundUpdate, &soundManager);
 
-  while (soundManagerShared == nullptr) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  UiManager uiManager(&soundManager);
+  uiManager.setupEvents(&eventManager, &soundManager);
 
-  UiManager uiManager(soundManagerShared);
-  uiManager.setupEvents(&eventManager, soundManagerShared);
-
-  std::thread eventThread(eventUpdate, soundManagerShared, &uiManager, &eventManager);
+  std::thread eventThread(eventUpdate, &soundManager, &uiManager, &eventManager);
 
   uiManager.Run();
 
-  soundManagerShared->unloadSound(); // make sure no sounds are loaded
-  programEnd = true;
+  programEnd.store(true);
+  eventManager.fireEvent({ .eventData = -1, .eventTarget = -1, .eventId = -1 });
 
-  soundManagerShared->END();
+  soundManager.END();
   eventManager.END();
 
-  programEnd.store(true);
   if (eventThread.joinable()) {
     eventThread.join();
   }
   if (soundThread.joinable()) {
     soundThread.join();
   }
+
+  soundManager.unloadSound(); // make sure no sounds are loaded
 
   std::cout << "Program end\n";
 

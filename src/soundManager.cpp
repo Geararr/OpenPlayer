@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <format>
 #include <thread>
+#include <oneapi/tbb/profiling.h>
+
 #include "IconsProto.h"
 #include "utils.hpp"
 
@@ -26,8 +28,10 @@ slint::Image Sound::getCoverImage()
 }
 
 // Constructor
-SoundManager::SoundManager()
+SoundManager::SoundManager(EventManager* eventManager)
 {
+    this->eventManager = eventManager;
+
     if (ma_engine_init(nullptr, &engine) != MA_SUCCESS)
     {
         std::cerr << "Failed to initialize audio engine." << '\n';
@@ -50,7 +54,7 @@ std::vector<std::string> SoundManager::getPlaylists() {
     return playlists;
 }
 
-int SoundManager::reloadSounds(const int playlist, EventManager* eventManager) {
+int SoundManager::reloadSounds(const int playlist) {
     if (playlist != currentPlaylist) {
         const std::vector<std::string> playlists = getPlaylists();
 
@@ -109,6 +113,8 @@ Sound* SoundManager::getSound(const int soundIndex) const {
 // sound interface functions
 void SoundManager::loadSound(const int soundIndex) // load all sound data into current sound
 {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
     Sound* sound = getSound(soundIndex);
 
     if (ma_sound_init_from_file(&engine, sound->getSoundPath().c_str(), 0, nullptr, nullptr, &currentSound) != MA_SUCCESS)
@@ -119,58 +125,136 @@ void SoundManager::loadSound(const int soundIndex) // load all sound data into c
     {
         currentSoundIndex = soundIndex;
         std::cout << "Loaded sound" << sound->getSoundName() << '\n';
+
+        // setup volume
+        setVolume(currentVolume);
+
         isSoundLoaded = true;
         setupSoundThread();
     }
 }
 void SoundManager::unloadSound()
 {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
     if (isSoundLoaded) {
         ma_sound_uninit(&currentSound);
         std::cout << "Unloaded sound\n";
         isSoundLoaded = false;
+
+        eventManager->fireEvent({ .eventData = 0, .eventTarget = UiTarget, .eventId = StopProgressTimer });
     }
 }
 void SoundManager::playSound()
 {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
     if (isSoundLoaded) {
         std::cout << "Playing sound\n";
         ma_sound_start(&currentSound);
         isPlaying = true;
+
+        eventManager->fireEvent({ .eventData = 0, .eventTarget = UiTarget, .eventId = StartProgressTimer }); // start progress timer as sound starts
     }
 }
 void SoundManager::setVolume(const float volume)
 {
-    ma_sound_set_volume(&currentSound, volume);
+    if (volume <= 1.0f && volume >= 0.0f) {
+        currentVolume = volume;
+        ma_sound_set_volume(&currentSound, currentVolume);
+    }
 }
 
 void SoundManager::seekToTimestamp(const double seconds) {
-    ma_uint32 sampleRate;
-    ma_result result = ma_sound_get_data_format(&currentSound, nullptr, nullptr, &sampleRate, nullptr, 0);
 
-    if (result != MA_SUCCESS) {
-        std::cerr << "Failed to retrieve song data format.\n";
-        return;
-    }
+    if (isSoundLoaded) {
+        ma_uint32 sampleRate;
+        ma_result result = ma_sound_get_data_format(&currentSound, nullptr, nullptr, &sampleRate, nullptr, 0);
 
-    const auto targetFrame = static_cast<ma_uint64>(seconds * sampleRate);
+        if (result != MA_SUCCESS) {
+            std::cerr << "Failed to retrieve song data format.\n";
+            return;
+        }
 
-    result = ma_sound_seek_to_pcm_frame(&currentSound, targetFrame);
+        const auto targetFrame = static_cast<ma_uint64>(seconds * sampleRate);
 
-    if (result == MA_SUCCESS) {
-        std::cout << "Successfully jumped to " << seconds << " seconds.\n";
-    }
-    else {
-        std::cerr << "Failed to seek to " << seconds << '\n';
+        result = ma_sound_seek_to_pcm_frame(&currentSound, targetFrame);
+
+        if (result == MA_SUCCESS) {
+            std::cout << "Successfully jumped to " << seconds << " seconds.\n";
+        }
+        else {
+            std::cerr << "Failed to seek to " << seconds << '\n';
+        }
     }
 }
 
+// needed utils
+float SoundManager::getSoundDuration() {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
+    float lengthInSeconds = 0.0f;
+
+    if (isSoundLoaded) {
+        ma_result result = ma_sound_get_length_in_seconds(&currentSound, &lengthInSeconds);
+
+        if (result != MA_SUCCESS) {
+            return 0.0f;
+        }
+    }
+
+    return lengthInSeconds;
+}
+slint::SharedString SoundManager::getSoundDurationString() {
+    const float lengthInSeconds = getSoundDuration();
+    const int totalSeconds = static_cast<int>(lengthInSeconds);
+
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
+
+    const std::string soundStr = std::format("{}:{}", minutes, seconds);
+
+    return static_cast<slint::SharedString>(soundStr);
+}
+
+float SoundManager::getSoundProgress() {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
+    float progressInSeconds = 0.0f;
+
+    if (isSoundLoaded) {
+        ma_result result = ma_sound_get_cursor_in_seconds(&currentSound, &progressInSeconds);
+
+        if (result != MA_SUCCESS) {
+            return 0.0f;
+        }
+    }
+
+    return progressInSeconds;
+}
+slint::SharedString SoundManager::getSoundProgressString() {
+    const float progressInSeconds = getSoundProgress();
+    const int totalSeconds = static_cast<int>(progressInSeconds);
+
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
+
+    const std::string soundStr = std::format("{}:{}", minutes, seconds);
+
+    return static_cast<slint::SharedString>(soundStr);
+}
+// end of utils
+
 void SoundManager::pauseSound()
 {
+    std::unique_lock<std::mutex> lock(sync.audioMtx);
+
     if (isSoundLoaded) {
         std::cout << "Pausing sound\n";
         ma_sound_stop(&currentSound);
         isPlaying = false;
+
+        eventManager->fireEvent({ .eventData = 0, .eventTarget = UiTarget, .eventId = StopProgressTimer });
     }
 }
 
@@ -238,16 +322,16 @@ void SoundManager::static_soundEndCallback(void* pUserData, ma_sound* pSound) {
 }
 void SoundManager::member_soundEndCallback() {
     {
-        std::lock_guard<std::mutex> lock(sync.mtx);
+        std::lock_guard<std::mutex> lock(sync.soundMtx);
         sync.isFinished = true;
     }
     sync.cv.notify_one();
 }
 
-void SoundManager::soundThreadUpdate(const std::atomic<bool>* programEnd, const std::function<void(const Event&)>& onEvent) {
+void SoundManager::soundThreadUpdate(const std::atomic<bool>* programEnd) { //, const std::function<void(const Event&)>& onEvent
     std::cout << "Sound Update Thread -> Waiting for sound to complete...\n";
 
-    std::unique_lock<std::mutex> lock(sync.mtx);
+    std::unique_lock<std::mutex> lock(sync.soundMtx);
     sync.cv.wait(lock, [this] { return sync.isFinished; });
 
     if (programEnd->load()) {
@@ -259,24 +343,22 @@ void SoundManager::soundThreadUpdate(const std::atomic<bool>* programEnd, const 
 
     std::cout << "Sound Update Thread -> Sound has completed!\n";
     // go to next song. Loops back to first song if reached end already
-    nextSound();
 
-    const Event newEvent{ .eventTarget = UiTarget,
-        .eventId = SelectSound,
-        .eventData = static_cast<int>(currentSoundIndex)
+    constexpr Event newEvent{
+        .eventData = 0,
+        .eventTarget = SoundTarget,
+        .eventId = NextSound
     };
 
-    if (onEvent) {
-        onEvent(newEvent);
-    }
+    eventManager->fireEvent(newEvent);
 }
 
 // Events
-void SoundManager::pollEvents(const Event event, EventManager* eventManager)
+void SoundManager::pollEvents(const Event event)
 {
     float volume;
 
-    Event newEvent = { .eventTarget = UiTarget, .eventId = -1, .eventData = 0};
+    Event newEvent = { .eventData = -1, .eventTarget = UiTarget, .eventId = -1};
 
     switch (event.eventId)
     {
@@ -285,24 +367,12 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
         case PauseSound: // pause sound
             pauseSound(); break;
 
-        case RaiseVolume: // raise volume
-            volume = ma_sound_get_volume(&currentSound);
-            if (volume < 1.0f)
-            {
-                setVolume(volume + 0.1f);
-            }
-            break;
-        case LowerVolume: // lower volume
-            volume = ma_sound_get_volume(&currentSound);
-            if (volume > 0.0f)
-            {
-                setVolume(volume - 0.1f);
-            }
-            break;
+        case SetVolume: setVolume(std::get<float>(event.eventData)); break;
+        case Seek: seekToTimestamp(std::get<float>(event.eventData)); break;
 
         case SelectSound: // select sound
             unloadSound();
-            currentSoundIndex = event.eventData;
+            currentSoundIndex = std::get<int>(event.eventData);
             loadSound(currentSoundIndex);
 
             if (isPlaying) {
@@ -310,7 +380,7 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
             }
 
             newEvent.eventId = SelectSound;
-            newEvent.eventData = event.eventData;
+            newEvent.eventData = std::get<int>(event.eventData);
             eventManager->fireEvent(newEvent);
             break;
 
@@ -318,7 +388,7 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
             nextSound();
 
             newEvent.eventId = SelectSound;
-            newEvent.eventData = static_cast<int>(currentSoundIndex);
+            newEvent.eventData = currentSoundIndex;
             eventManager->fireEvent(newEvent);
             break;
 
@@ -326,14 +396,14 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
             previousSound();
 
             newEvent.eventId = SelectSound;
-            newEvent.eventData = static_cast<int>(currentSoundIndex);
+            newEvent.eventData = currentSoundIndex;
             eventManager->fireEvent(newEvent);
             break;
 
         case ReloadPlaylist:// reload playlist
             //  ui pauses music, makes image blank, makes name empty, loads new playlist
             std::cout << "Reloading playlist.\n";
-            int result = reloadSounds(event.eventData, eventManager); // playlist index
+            int result = reloadSounds(std::get<int>(event.eventData)); // playlist index
             if (result == 1) {
                 unloadSound();
                 loadSound(0);
@@ -349,7 +419,7 @@ void SoundManager::pollEvents(const Event event, EventManager* eventManager)
 
 void SoundManager::END() {
     {
-        std::lock_guard<std::mutex> lock(sync.mtx);
+        std::lock_guard<std::mutex> lock(sync.soundMtx);
 
         sync.isFinished = true;
     }

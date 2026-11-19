@@ -10,6 +10,7 @@
 class UiManager {
     private:
         slint::ComponentHandle<OpenPlayerUI> ui;
+        slint::Timer progressCheckTimer;
 
     public:
         UiManager(SoundManager* soundManager); // setup ui

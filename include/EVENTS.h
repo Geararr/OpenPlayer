@@ -9,10 +9,12 @@ enum EventTarget {
 enum EventId {
     PlaySound,
     PauseSound,
-    RaiseVolume,
-    LowerVolume,
+    SetVolume,
     SelectSound,
     NextSound,
     PreviousSound,
     ReloadPlaylist,
+    StartProgressTimer,
+    StopProgressTimer,
+    Seek
 };

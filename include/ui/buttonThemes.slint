@@ -1,0 +1,380 @@
+import { Button, VerticalBox, HorizontalBox, TabWidget, ScrollView, ListView, Palette, Slider } from "std-widgets.slint";
+
+export global Theme {
+    out property <color> background-main: rgb(32, 32, 43);
+    out property <color> background-panel: rgba(17, 17, 27, 0.8);
+    out property <color> border-sublte: Palette.border;
+    out property <color> text-primary: rgb(215, 215, 247);
+    out property <color> button-normal: Palette.control-background;
+    out property <color> button-selected: Palette.control-background.darker(0.65);
+    out property <color> button-hover: Palette.control-background.brighter(0.65);
+}
+
+export struct PendingSong {
+    image: image,
+    title: string,
+}
+
+export component CustomButton inherits Rectangle {
+    in property <string> text;
+    in property <color> text-color: Theme.text-primary;
+    in property <length> font-size: 16px;
+    callback clicked <=> touch.clicked;
+
+    in property <bool> selected: false;
+
+    height: 32px;
+    border-radius: 4px;
+    background: selected ? Theme.button-selected : (touch.has-hover ? Theme.button-hover : Theme.button-normal);
+
+    touch := TouchArea {}
+
+    Text {
+        width: parent.width - 16px;
+        text: root.text;
+        font-size: root.font-size;
+        color: root.text-color;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+}
+
+export component PendingSongButton inherits Rectangle {
+    in property <image> art;
+    in property <string> text;
+    in property <color> text-color: Theme.text-primary;
+    in property <length> font-size: 14px;
+    in property <bool> selected: false;
+    callback clicked <=> touch.clicked;
+
+    min-height: 40px;
+    border-radius: 4px;
+    background: touch.has-hover ? Theme.button-hover : (root.selected ? Theme.button-selected : Theme.button-normal);
+
+    touch := TouchArea {}
+
+    HorizontalLayout {
+        padding: 8px;
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        alignment: start;
+
+        Image {
+            width: 24px;
+            height: 24px;
+            source: root.art;
+            image-fit: contain;
+            vertical-alignment: center;
+        }
+
+        Text {
+            min-width: 0px;
+            text: root.text;
+            font-size: root.font-size;
+            color: root.text-color;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+    }
+}
+
+export component ScrollableSelectionBox inherits Rectangle {
+    in property <string> button-text: "▼";
+    in property <[string]> model;
+    in-out property <int> current-index: 0;
+    in property <length> max-popup-height: 200px;
+    in property <length> font-size: 16px;
+
+    callback select(int, string);
+
+    height: 36px;
+    border-width: 1px;
+    border-color: Theme.border-sublte;
+    border-radius: 4px;
+    background: touch.has-hover ? Theme.button-hover : Theme.button-normal;
+
+    touch := TouchArea {
+        clicked => { popup.show(); }
+    }
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+
+        Text {
+            min-width: 0px;
+            horizontal-stretch: 1;
+            horizontal-alignment: center;
+            text: root.button-text;
+            color: Theme.text-primary;
+            vertical-alignment: center;
+            font-size: root.font-size;
+            overflow: elide;
+        }
+    }
+
+    popup := PopupWindow {
+        x: 0;
+        y: root.height + 2px;
+        width: root.width;
+        height: min(root.max-popup-height, root.model.length * 32px + 4px);
+
+        Rectangle {
+            background: Theme.background-panel;
+            border-width: 1px;
+            border-color: Theme.border-sublte;
+            border-radius: 4px;
+
+            ListView {
+                width: parent.width;
+                height: parent.height;
+
+                for item[idx] in root.model : CustomButton {
+                    width: parent.width;
+                    text: item;
+                    font-size: 14px;
+                    selected: idx == root.current-index;
+                    text-color: Theme.text-primary;
+
+                    clicked => {
+                        root.current-index = idx;
+                        root.select(idx, item);
+                        popup.close();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Interfaces
+export component LeftInterface inherits Rectangle {
+    in property <[string]> playlists;
+    callback playlist_set(int);
+
+    in property <bool> library-active: false;
+    callback toggle-library();
+
+    in property <bool> is-playing: false;
+
+    background: Theme.background-panel;
+    width: 180px;
+    height: 100%;
+    border-radius: 4px;
+
+    ScrollView {
+        width: 100%;
+        height: 100%;
+
+        VerticalLayout {
+            alignment: start;
+            padding: 8px;
+            spacing: 8px;
+
+            Text {
+                text: is-playing
+                    ? ("\u{000F040A} Playing" + (mod(floor(animation-tick() / 400ms), 4) == 0 ? "" : (mod(floor(animation-tick() / 400ms), 4) == 1 ? "." : (mod(floor(animation-tick() / 400ms), 4) == 2 ? ".." : "..."))))
+                    : "\u{000F03E4} Paused...";
+
+                color: is-playing
+                    ? Theme.text-primary.brighter(0.5 + 0.5 * sin(animation-tick() / 600ms * 1rad))
+                    : Theme.text-primary;
+
+                horizontal-alignment: center;
+            }
+
+            CustomButton {
+                text: "\u{000F024B} Library";
+                selected: root.library-active;
+
+                clicked => {
+                    root.toggle-library();
+                }
+            }
+            ScrollableSelectionBox {
+                button-text: "▼ Playlists";
+                model: playlists;
+
+                select(idx, text) => {
+                    root.playlist_set(idx);
+                }
+            }
+        }
+    }
+}
+
+export component SoundsInterface inherits Rectangle {
+    in property <image> current-image;
+    in property <string> current-sound;
+    in property <string> toggle-button;
+    in property <[PendingSong]> pendingSongs: [];
+
+    // Sound progress and volume
+    in-out property <float> playback-progress: 0.0; // Updated by C++
+    in-out property <float> progress: 0.0; // Updated by Slider
+    property <bool> is-seeking: false;
+
+    in property <float> duration: 0.0;
+    in property <string> current-time-text: "0:00";
+    in property <string> total-time-text: "0:00";
+    in-out property <float> volume: 1.0;
+
+
+    callback previous-song();
+    callback next-song();
+    callback toggle-music();
+    callback song-set(int);
+
+    // Sound progress and volume
+    callback seek(float);
+    callback volume-changed(float);
+
+    min-width: 0px;
+    max-width: 100000px;
+    background: Theme.background-panel;
+    border-radius: 4px;
+    border-color: Theme.border-sublte;
+
+    // Music art and queue
+    VerticalBox {
+        spacing: 8px;
+
+        HorizontalLayout {
+        alignment: center;
+            Image {
+                width: 200px; height: 200px;
+                source: current-image;
+                image-fit: contain;
+            }
+        }
+
+        Text {
+            min-width: 0px;
+            text: current-sound;
+            font-size: 24px;
+            color: Theme.text-primary;
+            horizontal-alignment: center;
+            overflow: elide;
+        }
+
+        // Song progress bar
+        HorizontalLayout {
+            alignment: center;
+            spacing: 10px;
+
+            Text {
+                text: root.current-time-text;
+                color: Theme.text-primary;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+
+//            Slider {
+//                width: 150px;
+//                minimum: 0.0;
+//                maximum: root.duration > 0 ? root.duration : 100.0;
+//
+//                value: root.is-seeking ? root.progress : root.playback-progress;
+//
+//                changed(val) => {
+//                    root.is-seeking = true;
+//                    root.progress = val;
+//                }
+//                released(val) => {
+//                    is-seeking = false;
+//                    root.playback-progress = val;
+//                    root.seek(val);
+//                }
+//            }
+
+            Text {
+                text: root.total-time-text;
+                color: Theme.text-primary;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+
+        // Volume Bar
+        HorizontalLayout {
+            alignment: center;
+            spacing: 10px;
+
+            Text {
+                text: root.volume == 0 ? "\u{000F0581}" : (root.volume < 0.5 ? "\u{000F0580}" : "\u{000F057E}");
+                color: Theme.text-primary;
+                font-size: 16px;
+                vertical-alignment: center;
+            }
+
+            Slider {
+                width: 140px;
+                minimum: 0.0;
+                maximum: 1.0;
+                value <=> root.volume;
+                changed(val) => {
+                    root.volume-changed(val);
+                }
+            }
+        }
+
+        HorizontalBox {
+            alignment: center;
+            cross-axis-alignment: center;
+            spacing: 10px;
+
+            Button {
+                text: "\u{000F04AE}";
+                clicked() => { previous-song(); }
+            }
+
+            Button {
+                text: toggle-button;
+                clicked() => { toggle-music(); }
+            }
+
+            Button {
+                text: "\u{000F04AD}";
+                clicked() => { next-song(); }
+            }
+        }
+
+        Rectangle {
+            background: Theme.background-panel;
+            vertical-stretch: 1;
+            border-radius: 4px;
+
+            scroll := ScrollView {
+                width: 100%;
+                height: 100%;
+
+                VerticalLayout {
+                    width: scroll.visible-width;
+                    alignment: start;
+                    padding: 8px;
+                    spacing: 5px;
+
+                    for pending_song[index] in pendingSongs : PendingSongButton {
+                        art: pending-song.image;
+                        text: pending-song.title;
+
+                        clicked => {
+                            root.song-set(index);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component LibraryInterface inherits Rectangle {
+    min-width: 0px;
+    max-width: 10000px;
+    background: Theme.background-panel;
+    border-radius: 4px;
+    border-color: Theme.border-sublte;
+}
