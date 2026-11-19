@@ -26,6 +26,8 @@ void eventUpdate(SoundManager *soundManager, UiManager *uiManager, EventManager 
 
 void soundUpdate(SoundManager *soundManager) {
 
+  soundManager->Init(); // initialize sound engine on sound thread
+
   while (!programEnd.load()) {
     soundManager->soundThreadUpdate(&programEnd);
   }
@@ -33,11 +35,6 @@ void soundUpdate(SoundManager *soundManager) {
 }
 
 int main() {
-
-#if defined(_WIN32)
-  _putenv_s("SLINT_BACKEND", "software");
-#endif
-
   EventManager eventManager;
 
   SoundManager soundManager{&eventManager};

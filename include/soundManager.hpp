@@ -53,7 +53,8 @@ class SoundManager {
         EventManager* eventManager = nullptr;
 
     public:
-        explicit SoundManager(EventManager* eventManager); // initialize sound engine
+        explicit SoundManager(EventManager* eventManager);
+        void Init(); // initialize sound engines
         ~SoundManager(); // uninitialize sound engine
 
         std::vector<std::string> getPlaylists();

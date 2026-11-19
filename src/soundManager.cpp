@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <format>
 #include <thread>
-#include <oneapi/tbb/profiling.h>
+
 
 #include "IconsProto.h"
 #include "utils.hpp"
@@ -31,7 +31,9 @@ slint::Image Sound::getCoverImage()
 SoundManager::SoundManager(EventManager* eventManager)
 {
     this->eventManager = eventManager;
+}
 
+void SoundManager::Init() {
     if (ma_engine_init(nullptr, &engine) != MA_SUCCESS)
     {
         std::cerr << "Failed to initialize audio engine." << '\n';
