@@ -17,7 +17,7 @@ UiManager::UiManager(SoundManager* soundManager) : ui(OpenPlayerUI::create()) {
 
     const auto playlist_model = std::make_shared<slint::VectorModel<slint::SharedString>>();
     for (const auto& playlist : soundManager->getPlaylists()) {
-        playlist_model->push_back(playlist.data());
+        playlist_model->push_back(static_cast<slint::SharedString>(playlist.filename().string()));
     }
 
     ui->set_playlists(playlist_model);
@@ -63,10 +63,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
         eventManager->fireEvent({ .eventData = 0, .eventTarget = SoundTarget, .eventId = PreviousSound });
     });
 
-    // Sound & Volume
-    ui->on_seek([eventManager, soundManager, ui_weak](const float time) {
-        eventManager->fireEvent({ .eventData = time, .eventTarget = SoundTarget, .eventId = Seek});
-    });
+    // Volume
     ui->on_volume_changed([eventManager, soundManager, ui_weak](const float volume) {
         eventManager->fireEvent({ .eventData = volume, .eventTarget = SoundTarget, .eventId = SetVolume });
     });
@@ -112,11 +109,9 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                         ui_strong->set_is_playing(false);
 
                         ui_strong->set_pendingSongs(std::make_shared<slint::VectorModel<PendingSong>>());
-                        ui_strong->set_duration(0.0f);
-                        ui_strong->set_progress(0.0f);
+
                         ui_strong->set_current_time_text(slint::SharedString("0:00"));
                         ui_strong->set_total_time_text(slint::SharedString("0:00"));
-                        ui_strong->set_playback_progress(0.0f);
                     }
                 });
             }
@@ -144,12 +139,8 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                         }
                         ui_strong->set_pendingSongs(pendingSongs);
 
-                        // setup sound length for seeking
-                        ui_strong->set_duration(duration);
-                        ui_strong->set_progress(0.0f);
                         ui_strong->set_current_time_text(slint::SharedString("0:00"));
                         ui_strong->set_total_time_text(durationStr);
-                        ui_strong->set_playback_progress(0.0f);
                     }
                 });
             }
@@ -167,12 +158,11 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
 
             const std::string soundName = selectedSound->getSoundName();
             const slint::Image soundImage = selectedSound->getCoverImage();
-            const float duration = soundManager->getSoundDuration();
             const auto durationStr = soundManager->getSoundDurationString();
 
             auto ui_weak = getWeakHandle();
 
-            slint::invoke_from_event_loop([ui_weak, soundName, soundImage, duration, durationStr]() {
+            slint::invoke_from_event_loop([ui_weak, soundName, soundImage, durationStr]() {
                 if (const auto ui_strong_opt = ui_weak.lock()) {
 
                     const auto& ui_strong = *ui_strong_opt;
@@ -180,12 +170,8 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                     ui_strong->set_current_sound(slint::SharedString(soundName));
                     ui_strong->set_current_image(soundImage);
 
-                    // setup sound length for seeking
-                    ui_strong->set_duration(duration);
-                    ui_strong->set_progress(0.0f);
                     ui_strong->set_current_time_text(slint::SharedString("0:00"));
                     ui_strong->set_total_time_text(durationStr);
-                    ui_strong->set_playback_progress(0.0f);
                 }
             });
         } break;
@@ -198,9 +184,8 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
                     slint::TimerMode::Repeated,
                     std::chrono::milliseconds(200),
                     [ui_weak, soundManager]() {
-                        if (auto ui_strong_opt = ui_weak.lock()) {
+                        if (const auto ui_strong_opt = ui_weak.lock()) {
                             const auto& ui_strong = *ui_strong_opt;
-                            ui_strong->set_playback_progress(soundManager->getSoundProgress());
                             ui_strong->set_current_time_text(soundManager->getSoundProgressString());
                         }
                     }

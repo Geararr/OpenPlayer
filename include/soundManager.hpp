@@ -21,16 +21,17 @@ struct SoundSync {
 
 class Sound {
     private:
+        std::filesystem::path path;
         std::string name;
-        std::string path;
         std::vector<uint8_t> coverBytes;
         slint::Image coverImage;
 
     public:
-        Sound(const std::string& soundPath, const std::string& soundName);
-        std::string getSoundPath();
-        std::string getSoundName();
-        slint::Image getCoverImage();
+        explicit Sound(const std::filesystem::path& soundPath);
+
+        [[nodiscard]] std::filesystem::path& getSoundPath();
+        [[nodiscard]] std::string getSoundName();
+        [[nodiscard]] slint::Image& getCoverImage();
 };
 
 class SoundManager {
@@ -57,7 +58,7 @@ class SoundManager {
         void Init(); // initialize sound engines
         ~SoundManager(); // uninitialize sound engine
 
-        std::vector<std::string> getPlaylists();
+        std::vector<std::filesystem::path> getPlaylists();
         int reloadSounds(int playlist); // searches assets/music/playlist folder for any music and loads them inside sounds array
 
         [[nodiscard]] size_t getPlaylistSize() const;

@@ -10,16 +10,9 @@ export component OpenPlayerUI inherits Window {
 
     in property <bool> is-playing: false;
 
-    // Sound progress and volume
-    in-out property <float> playback-progress: 0.0; // Updated by C++
-    in-out property <float> progress: 0.0; // Updated by Slider
-    property <bool> is-seeking: false;
-
-    in property <float> duration: 0.0;
     in property <string> current-time-text: "0:00";
     in property <string> total-time-text: "0:00";
     in-out property <float> volume: 1.0;
-
 
     in-out property <[string]> playlists;
     in-out property <[PendingSong]> pendingSongs: [];
@@ -42,12 +35,6 @@ export component OpenPlayerUI inherits Window {
     callback previous-song();
     callback toggle-music();
 
-    callback seek(float);
-    changed playback-progress => {
-        if (!root.is-seeking) {
-            root.progress = root.playback-progress;
-        }
-    }
     callback volume-changed(float);
 
     HorizontalLayout {
@@ -86,17 +73,10 @@ export component OpenPlayerUI inherits Window {
                 root.song_set(index);
             }
 
-            // Sound volume and seeking
-            playback-progress: root.playback-progress;
-            progress: progress;
-            duration: duration;
             current-time-text: current-time-text;
             total-time-text: total-time-text;
             volume <=> root.volume;
 
-            seek(val) => {
-                root.seek(val);
-            }
             volume-changed(val) => {
                 root.volume-changed(val)
             }

@@ -212,24 +212,16 @@ export component SoundsInterface inherits Rectangle {
     in property <string> toggle-button;
     in property <[PendingSong]> pendingSongs: [];
 
-    // Sound progress and volume
-    in-out property <float> playback-progress: 0.0; // Updated by C++
-    in-out property <float> progress: 0.0; // Updated by Slider
-    property <bool> is-seeking: false;
-
-    in property <float> duration: 0.0;
     in property <string> current-time-text: "0:00";
     in property <string> total-time-text: "0:00";
     in-out property <float> volume: 1.0;
-
 
     callback previous-song();
     callback next-song();
     callback toggle-music();
     callback song-set(int);
 
-    // Sound progress and volume
-    callback seek(float);
+    // volume
     callback volume-changed(float);
 
     min-width: 0px;
@@ -271,24 +263,6 @@ export component SoundsInterface inherits Rectangle {
                 font-size: 12px;
                 vertical-alignment: center;
             }
-
-//            Slider {
-//                width: 150px;
-//                minimum: 0.0;
-//                maximum: root.duration > 0 ? root.duration : 100.0;
-//
-//                value: root.is-seeking ? root.progress : root.playback-progress;
-//
-//                changed(val) => {
-//                    root.is-seeking = true;
-//                    root.progress = val;
-//                }
-//                released(val) => {
-//                    is-seeking = false;
-//                    root.playback-progress = val;
-//                    root.seek(val);
-//                }
-//            }
 
             Text {
                 text: root.total-time-text;

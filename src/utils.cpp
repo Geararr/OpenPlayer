@@ -22,27 +22,24 @@ slint::Image CreateNoiseImage(uint32_t width = 128, uint32_t height = 128) {
     return {pixelBuffer};
 }
 
-std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
+std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::filesystem::path& filePath)
 {
     std::vector<uint8_t> imageBytes;
     if (filePath.empty()) return imageBytes;
 
-#ifdef _WIN32
-    std::filesystem::path fsPath(reinterpret_cast<const char8_t*>(filePath.c_str()));
-    TagLib::FileRef f(fsPath.wstring().c_str());
-#else
-    std::filesystem::path fsPath(filePath);
-    TagLib::FileRef f(filePath.c_str());
-#endif
+    const TagLib::FileRef f(filePath.c_str());
 
     if (f.isNull() || !f.file() || !f.file()->isValid()) return imageBytes;
 
-    const std::string filename = fsPath.filename().string();
+    const std::string filename = filePath.filename().string();
 
     TagLib::File* filePtr = f.file();
 
+    std::string ext = filePath.extension().string();
+    std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return std::tolower(c); });
+
     // mp3
-    if (filePath.size() >= 4 && filePath.substr(filePath.size() - 4) == ".mp3")
+    if (ext == ".mp3")
     {
 
         if (auto* mpegFile = dynamic_cast<TagLib::MPEG::File*>(f.file()))
@@ -148,7 +145,7 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
 std::filesystem::path SoundData::getExecDir() {
     #ifdef _WIN32
         wchar_t path[MAX_PATH] = { 0 };
-        GetModuleFileNameW(NULL, path, MAX_PATH);
+        GetModuleFileNameW(nullptr, path, MAX_PATH);
         return std::filesystem::path(path).parent_path();
     #else
         char result[PATH_MAX];

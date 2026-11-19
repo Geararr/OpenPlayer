@@ -8,13 +8,14 @@
 #include "IconsProto.h"
 #include "utils.hpp"
 
-Sound::Sound(const std::string& soundPath, const std::string& soundName) {
-    path = soundPath;
-    name = soundName;
-    coverBytes = SoundData::GetAudioCoverBytes(soundPath);
-    coverImage = SoundData::GetImageFromBytes(coverBytes);
-}
-std::string Sound::getSoundPath()
+Sound::Sound(const std::filesystem::path& soundPath)
+    : path(soundPath),
+      name(soundPath.filename().string()),
+      coverBytes(SoundData::GetAudioCoverBytes(soundPath)),
+      coverImage(SoundData::GetImageFromBytes(coverBytes))
+{}
+
+std::filesystem::path& Sound::getSoundPath()
 {
     return path;
 }
@@ -22,7 +23,7 @@ std::string Sound::getSoundName()
 {
     return name;
 }
-slint::Image Sound::getCoverImage()
+slint::Image& Sound::getCoverImage()
 {
     return coverImage;
 }
@@ -41,28 +42,32 @@ void SoundManager::Init() {
     }
 }
 
-std::vector<std::string> SoundManager::getPlaylists() {
-    std::vector<std::string> playlists;
+std::vector<std::filesystem::path> SoundManager::getPlaylists() {
+    std::vector<std::filesystem::path> playlists;
+    const std::filesystem::path playlistDir = SoundData::getExecDir() / "music";
 
-    std::filesystem::path playlistDir = SoundData::getExecDir() / "music";
-
-    for (const auto& entry : std::filesystem::directory_iterator(playlistDir)) {
-        if (entry.is_directory()) {
-            std::cerr << entry.path() << '\n'; // TEMP DEBUG
-            playlists.push_back(entry.path().filename().string());
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::directory_iterator(playlistDir, ec)) {
+        if (entry.is_directory(ec)) {
+            playlists.push_back(entry.path());
         }
     }
-
     return playlists;
 }
 
 int SoundManager::reloadSounds(const int playlist) {
     if (playlist != currentPlaylist) {
-        const std::vector<std::string> playlists = getPlaylists();
+        const std::vector<std::filesystem::path> playlists = getPlaylists();
 
-        const std::string &rPlaylist = playlists.at(playlist);
+        if (playlist < 0 || static_cast<size_t>(playlist) >= playlists.size()) {
+            return 0;
+        }
 
-        std::cout << "Selected playlist -> " << rPlaylist << '\n';
+        const std::filesystem::path& rPlaylist = playlists.at(playlist);
+
+        std::cout << "Selected playlist -> "
+                  << rPlaylist.string()
+                  << '\n';
 
         std::filesystem::path musicDir = SoundData::getExecDir() / "music" / rPlaylist;
 
@@ -78,7 +83,7 @@ int SoundManager::reloadSounds(const int playlist) {
                     if (entry.is_regular_file())
                     {
                         std::cout << "Sound exists -> " << entry.path().filename().string() << '\n';
-                        sounds.push_back(std::make_unique<Sound>(entry.path().string(), entry.path().filename().stem().string()));
+                        sounds.push_back(std::make_unique<Sound>(entry.path()));
                     }
                 }
 
@@ -119,7 +124,14 @@ void SoundManager::loadSound(const int soundIndex) // load all sound data into c
 
     Sound* sound = getSound(soundIndex);
 
-    if (ma_sound_init_from_file(&engine, sound->getSoundPath().c_str(), 0, nullptr, nullptr, &currentSound) != MA_SUCCESS)
+    ma_result result;
+#ifdef _WIN32
+    result = ma_sound_init_from_file_w(&engine, reinterpret_cast<const wchar_t *>(sound->getSoundPath().c_str()), 0, nullptr, nullptr, &currentSound);
+#else
+    result = ma_sound_init_from_file(&engine, sound->getSoundPath().c_str(), 0, nullptr, nullptr, &currentSound);
+#endif
+
+    if (result != MA_SUCCESS)
     {
         std::cerr << "Failed to load sound -> " << sound->getSoundName() << '\n';
     }
