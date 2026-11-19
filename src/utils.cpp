@@ -2,18 +2,42 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
+#include <random>
+#include <filesystem>
 #include <slint/slint.h>
+
+slint::Image CreateNoiseImage(uint32_t width = 128, uint32_t height = 128) {
+    slint::SharedPixelBuffer<slint::Rgba8Pixel> pixelBuffer(width, height);
+
+    static thread_local std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(0, 255);
+
+    for (auto& pixel : pixelBuffer) {
+        pixel.r = static_cast<uint8_t>(dist(rng));
+        pixel.g = static_cast<uint8_t>(dist(rng));
+        pixel.b = static_cast<uint8_t>(dist(rng));
+        pixel.a = 255;
+    }
+
+    return {pixelBuffer};
+}
 
 std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
 {
-    const size_t filenamePos = filePath.find_last_of('/');
-    const std::string filename = (filenamePos != std::string::npos) ? filePath.substr(filenamePos + 1) : filePath;
-
     std::vector<uint8_t> imageBytes;
+    if (filePath.empty()) return imageBytes;
 
+#ifdef _WIN32
+    std::filesystem::path fsPath(reinterpret_cast<const char8_t*>(filePath.c_str()));
+    TagLib::FileRef f(fsPath.wstring().c_str());
+#else
+    std::filesystem::path fsPath(filePath);
     TagLib::FileRef f(filePath.c_str());
-    if (f.isNull() || !f.file()->isValid()) return imageBytes;
+#endif
+
+    if (f.isNull() || !f.file() || !f.file()->isValid()) return imageBytes;
+
+    const std::string filename = fsPath.filename().string();
 
     TagLib::File* filePtr = f.file();
 
@@ -86,6 +110,10 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& filePath)
 
 slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes)
 {
+    if (imageBytes.empty()) {
+        return CreateNoiseImage();
+    }
+
     int width = 0;
     int height = 0;
     int channels = 0;
@@ -101,7 +129,7 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
 
     if (!decoded_pixels) {
         std::cerr << "Failed to decode compressed image data!\n";
-        return slint::Image();
+        return CreateNoiseImage();
     }
 
     slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(width, height);

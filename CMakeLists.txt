@@ -60,6 +60,8 @@ if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
 endif()
 
 
+set_property(TARGET OpenPlayer PROPERTY SLINT_EMBED_RESOURCES embed-files)
+
 slint_target_sources(OpenPlayer include/ui/app_window.slint)
 target_include_directories(OpenPlayer PRIVATE include)
 
