@@ -1,6 +1,8 @@
 // STD stuff
 #include <thread>
 #include <vector>
+#include <exception>
+#include <cstdio>
 
 // Project Includes
 #include "EVENTS.h"
@@ -35,22 +37,21 @@ void soundUpdate(SoundManager *soundManager) {
 }
 
 int main() {
-  // setup rendering stuff
+    // setup rendering stuff
 #ifdef _WIN32
-  _putenv_s("SLINT_BACKEND", "winit-femtovg");
+    _putenv_s("SLINT_BACKEND", "winit-femtovg");
 #else
-  setenv("SLINT_BACKEND", "winit-skia", 1);
+    setenv("SLINT_BACKEND", "winit-skia", 1);
 #endif
 
   EventManager eventManager;
 
   SoundManager soundManager{&eventManager};
 
-  std::thread soundThread(soundUpdate, &soundManager);
-
   UiManager uiManager(&soundManager);
   uiManager.setupEvents(&eventManager, &soundManager);
 
+  std::thread soundThread(soundUpdate, &soundManager);
   std::thread eventThread(eventUpdate, &soundManager, &uiManager, &eventManager);
 
   uiManager.Run();

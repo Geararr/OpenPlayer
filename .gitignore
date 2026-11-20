@@ -2,6 +2,8 @@ cmake-build-*
 .cmake/
 imgui.ini
 EXPORT/
-.idea
 assets/
 build/.xwin-cache/
+.vscode
+.idea
+

@@ -176,6 +176,9 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
 }
 
 std::filesystem::path SoundData::getExecDir() {
+#ifdef __EMSCRIPTEN__
+    return "/";
+#else
     #ifdef _WIN32
         wchar_t path[MAX_PATH] = { 0 };
         GetModuleFileNameW(nullptr, path, MAX_PATH);
@@ -185,4 +188,5 @@ std::filesystem::path SoundData::getExecDir() {
         ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
         return std::filesystem::path(std::string(result, (count > 0) ? count : 0)).parent_path();
     #endif
+#endif
 }
