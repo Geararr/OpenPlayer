@@ -1,0 +1,13 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260" width="260" height="260">
+	<style>
+		.s0 { fill: #0072ff;stroke: #000000;stroke-miterlimit:10 } 
+	</style>
+	<g id="Layer 1 copy">
+		<path id="Shape 1" fill-rule="evenodd" class="s0" d="m134.02 126.02v94.03h-94.02v-94.03z"/>
+		<path id="Shape 1 copy" fill-rule="evenodd" class="s0" d="m229.01 32v94.02h-94.03v-94.02z"/>
+	</g>
+	<path id="Shape 1 copy 2" fill-rule="evenodd" class="s0" d="m134.02 32v94.02h-94.02v-94.02z"/>
+	<g id="Layer 1">
+		<path id="Shape 1" fill-rule="evenodd" class="s0" d="m229.01 126.02v94.03h-94.03v-94.03z"/>
+	</g>
+</svg>

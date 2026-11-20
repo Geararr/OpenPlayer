@@ -1,0 +1,102 @@
+:root {
+    --background-color: rgb(18, 23, 38);
+    --base-text-color: rgb(65, 154, 255);
+    --divider-color: rgb(97, 215, 0);
+}
+
+body {
+    background-color: var(--background-color);
+}
+
+.top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 12px;
+
+    width: fit-content;
+    margin: 0 auto;
+
+    border-radius: 8px;
+    border: 2px solid transparent;
+
+    background:
+        linear-gradient(var(--background-color), var(--background-color)) padding-box,
+        linear-gradient(to right, #33B9E6, #04F090) border-box;
+}
+
+.top-bar h1 {
+    margin: 0;
+    line-height: 1;
+}
+.pg-icon img {
+    height: 60px;
+    width: 60px;
+    display: block;
+    position: relative;
+}
+.pg-title {
+    font-family: "JetBrains Mono";
+    font-size: 45px;
+    font-weight: 750;
+    color: var(--base-text-color);
+    text-align: center;
+
+}
+
+.op-player-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 530px;
+    width: 100%;
+}
+.op-player-img img {
+    width: 650px;
+    height: auto;
+}
+
+.description {
+    font-family: "JetBrains Mono";
+    color: var(--base-text-color);
+    font-size: 18px;
+    text-align: center;
+    padding-bottom: 16px;
+}
+
+.download-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 20px;
+
+    width: fit-content;
+    margin: 0 auto;
+
+    border-radius: 8px;
+    border: 2px solid transparent;
+
+    background:
+        linear-gradient(var(--background-color), var(--background-color)) padding-box,
+        linear-gradient(to right, #33B9E6, #04F090) border-box;
+}
+.download-buttons .d-button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    padding: 10px;
+}
+.download-buttons .d-button img {
+    height: 60px;
+    width: 60px;
+}
+
+.credits {
+    font-family: "JetBrains Mono";
+    color: var(--base-text-color);
+    font-size: 15px;
+    text-align: center;
+}
