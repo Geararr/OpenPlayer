@@ -75,11 +75,16 @@ target_link_libraries(OpenPlayer PRIVATE
         TagLib::tag
 )
 
-if(WIN32)
+if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
     target_link_libraries(OpenPlayer PRIVATE winmm)
     set_target_properties(OpenPlayer PROPERTIES WIN32_EXECUTABLE TRUE)
 
-    if(MINGW)
-        target_link_options(OpenPlayer PRIVATE "-mwindows" "-static-libgcc" "-static-libstdc++")
+    if(MINGW OR CMAKE_CXX_COMPILER MATCHES "mingw")
+        target_link_options(OpenPlayer PRIVATE
+            "-mwindows"
+            "-Wl,--subsystem,windows"
+            "-static-libgcc"
+            "-static-libstdc++"
+        )
     endif()
 endif()
