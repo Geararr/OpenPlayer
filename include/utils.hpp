@@ -32,6 +32,6 @@
 
 namespace SoundData {
     std::vector<uint8_t> GetAudioCoverBytes(const std::filesystem::path& filePath);
-    slint::Image GetImageFromBytes(const std::vector<uint8_t>& imageBytes);
+    slint::Image GetImageFromBytes(const std::vector<uint8_t>& imageBytes, int maxDimension = 512);
     std::filesystem::path getExecDir();
 }

@@ -12,7 +12,8 @@ Sound::Sound(const std::filesystem::path& soundPath)
     : path(soundPath),
       name(soundPath.filename().string()),
       coverBytes(SoundData::GetAudioCoverBytes(soundPath)),
-      coverImage(SoundData::GetImageFromBytes(coverBytes))
+      coverImagePlaying(SoundData::GetImageFromBytes(coverBytes, 512)),
+      coverImagePending(SoundData::GetImageFromBytes(coverBytes, 128))
 {}
 
 std::filesystem::path& Sound::getSoundPath()
@@ -23,9 +24,9 @@ std::string Sound::getSoundName()
 {
     return name;
 }
-slint::Image& Sound::getCoverImage()
+slint::Image& Sound::getCoverImage(const int which)
 {
-    return coverImage;
+    return which ? coverImagePlaying : coverImagePending;
 }
 
 // Constructor

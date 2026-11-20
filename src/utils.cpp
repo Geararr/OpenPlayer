@@ -2,11 +2,17 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb_image_resize2.h"
+
 #include <random>
 #include <filesystem>
 #include <slint/slint.h>
 
-slint::Image CreateNoiseImage(uint32_t width = 128, uint32_t height = 128) {
+#include <cstring>
+
+slint::Image CreateNoiseImage(const uint32_t width = 128, const uint32_t height = 128) {
     slint::SharedPixelBuffer<slint::Rgba8Pixel> pixelBuffer(width, height);
 
     static thread_local std::mt19937 rng(std::random_device{}());
@@ -105,7 +111,7 @@ std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::filesystem::path& 
     return imageBytes;
 }
 
-slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes)
+slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes, const int maxDimension)
 {
     if (imageBytes.empty()) {
         return CreateNoiseImage();
@@ -114,6 +120,15 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
     int width = 0;
     int height = 0;
     int channels = 0;
+
+    if (!stbi_info_from_memory(imageBytes.data(), static_cast<int>(imageBytes.size()), &width, &height, &channels)) {
+        std::cerr << "Failed to decode image data!\n";
+        return CreateNoiseImage();
+    }
+    if (width <= 0 || height <= 0 || width > 4096 || height > 4096) {
+        std::cerr << "Image dimensions are too large!\n";
+        return CreateNoiseImage();
+    }
 
     unsigned char* decoded_pixels = stbi_load_from_memory(
         imageBytes.data(),
@@ -125,20 +140,38 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
     );
 
     if (!decoded_pixels) {
-        std::cerr << "Failed to decode compressed image data!\n";
+        std::cerr << "Failed to decode image: " << stbi_failure_reason() << '\n';
         return CreateNoiseImage();
+    }
+
+    if (width > maxDimension || height > maxDimension) {
+        const float scale = static_cast<float>(maxDimension) / std::max(width, height);
+        const int targetW = std::max(1, static_cast<int>(width * scale));
+        const int targetH = std::max(1, static_cast<int>(height * scale));
+
+        slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(targetW, targetH);
+
+        void* result = stbir_resize_uint8_srgb(
+            decoded_pixels, width, height, 0,
+            reinterpret_cast<unsigned char *>(pixel_buffer.begin()), targetW, targetH, 0,
+            STBIR_RGBA
+        );
+
+        if (!result) {
+            std::cerr << "Image resizing failed!\n";
+            return CreateNoiseImage();
+        }
+
+        stbi_image_free(decoded_pixels);
+        return slint::Image(pixel_buffer);
     }
 
     slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(width, height);
 
-    std::copy(
-        reinterpret_cast<const slint::Rgba8Pixel*>(decoded_pixels),
-        reinterpret_cast<const slint::Rgba8Pixel*>(decoded_pixels) + (width * height),
-        pixel_buffer.begin()
-    );
+    const size_t byteCount = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
+    std::memcpy(pixel_buffer.begin(), decoded_pixels, byteCount);
 
     stbi_image_free(decoded_pixels);
-
     return slint::Image(pixel_buffer);
 }
 

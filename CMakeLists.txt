@@ -31,6 +31,11 @@ if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
             GIT_TAG v1.18.0
             SOURCE_SUBDIR api/cpp
     )
+
+    set(SLINT_FEATURE_BACKEND_QT OFF CACHE BOOL "" FORCE)
+    set(SLINT_FEATURE_BACKEND_WINIT ON CACHE BOOL "" FORCE)
+    set(SLINT_FEATURE_RENDERER_SKIA OFF CACHE BOOL "" FORCE)
+
     FetchContent_MakeAvailable(Slint)
 else()
     message(STATUS "Native linux build: Using local Slint path.")

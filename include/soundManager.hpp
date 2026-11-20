@@ -24,14 +24,15 @@ class Sound {
         std::filesystem::path path;
         std::string name;
         std::vector<uint8_t> coverBytes;
-        slint::Image coverImage;
+        slint::Image coverImagePlaying;
+        slint::Image coverImagePending;
 
     public:
         explicit Sound(const std::filesystem::path& soundPath);
 
         [[nodiscard]] std::filesystem::path& getSoundPath();
         [[nodiscard]] std::string getSoundName();
-        [[nodiscard]] slint::Image& getCoverImage();
+        [[nodiscard]] slint::Image& getCoverImage(int which);
 };
 
 class SoundManager {

@@ -90,7 +90,9 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
 
             for (int i = 0; i < count; ++i) {
                 if (auto* s = soundManager->getSound(i)) {
-                    tracks.push_back({ .name = s->getSoundName(), .image = s->getCoverImage()});
+                    int imageType = 0;
+                    if (i == 0) imageType = 1;
+                    tracks.push_back({ .name = s->getSoundName(), .image = s->getCoverImage(imageType)});
                 }
             }
 
@@ -157,7 +159,7 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
             }
 
             const std::string soundName = selectedSound->getSoundName();
-            const slint::Image soundImage = selectedSound->getCoverImage();
+            const slint::Image soundImage = selectedSound->getCoverImage(1); // 1 = primary
             const auto durationStr = soundManager->getSoundDurationString();
 
             auto ui_weak = getWeakHandle();

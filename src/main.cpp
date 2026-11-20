@@ -35,6 +35,13 @@ void soundUpdate(SoundManager *soundManager) {
 }
 
 int main() {
+  // setup rendering stuff
+#ifdef _WIN32
+  _putenv_s("SLINT_BACKEND", "winit-femtovg");
+#else
+  setenv("SLINT_BACKEND", "winit-skia", 1);
+#endif
+
   EventManager eventManager;
 
   SoundManager soundManager{&eventManager};
