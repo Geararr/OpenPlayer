@@ -1,5 +1,3 @@
 # OpenPlayer
 
-### 1. Fix UI [TODO]
-
-### ya
+### [DONE] For now atleast :P
