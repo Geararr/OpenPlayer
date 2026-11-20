@@ -2,9 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/WebBuild/build/_deps/corrosion-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/WebBuild/build/_deps/slint-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/WebBuild/build/_deps/taglib-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/WebBuild/build/_deps/taglib-src/3rdparty/utfcpp" vcs="Git" />
   </component>
 </project>
