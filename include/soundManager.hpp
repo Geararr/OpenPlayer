@@ -70,7 +70,7 @@ class SoundManager {
 
         void playSound(); // play current
         void setVolume(float volume);
-        void seekToTimestamp(double seconds);
+        // void seekToTimestamp(double seconds);
         void pauseSound(); // pause current sound
 
         // needed utils

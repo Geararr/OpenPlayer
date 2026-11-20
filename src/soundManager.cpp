@@ -127,7 +127,7 @@ void SoundManager::loadSound(const int soundIndex) // load all sound data into c
 
     ma_result result;
 #ifdef _WIN32
-    result = ma_sound_init_from_file_w(&engine, reinterpret_cast<const wchar_t *>(sound->getSoundPath().c_str()), 0, nullptr, nullptr, &currentSound);
+    result = ma_sound_init_from_file_w(&engine, sound->getSoundPath().c_str(), 0, nullptr, nullptr, &currentSound);
 #else
     result = ma_sound_init_from_file(&engine, sound->getSoundPath().c_str(), 0, nullptr, nullptr, &currentSound);
 #endif
@@ -180,29 +180,29 @@ void SoundManager::setVolume(const float volume)
     }
 }
 
-void SoundManager::seekToTimestamp(const double seconds) {
-
-    if (isSoundLoaded) {
-        ma_uint32 sampleRate;
-        ma_result result = ma_sound_get_data_format(&currentSound, nullptr, nullptr, &sampleRate, nullptr, 0);
-
-        if (result != MA_SUCCESS) {
-            std::cerr << "Failed to retrieve song data format.\n";
-            return;
-        }
-
-        const auto targetFrame = static_cast<ma_uint64>(seconds * sampleRate);
-
-        result = ma_sound_seek_to_pcm_frame(&currentSound, targetFrame);
-
-        if (result == MA_SUCCESS) {
-            std::cout << "Successfully jumped to " << seconds << " seconds.\n";
-        }
-        else {
-            std::cerr << "Failed to seek to " << seconds << '\n';
-        }
-    }
-}
+// void SoundManager::seekToTimestamp(const double seconds) {
+//
+//     if (isSoundLoaded) {
+//         ma_uint32 sampleRate;
+//         ma_result result = ma_sound_get_data_format(&currentSound, nullptr, nullptr, &sampleRate, nullptr, 0);
+//
+//         if (result != MA_SUCCESS) {
+//             std::cerr << "Failed to retrieve song data format.\n";
+//             return;
+//         }
+//
+//         const auto targetFrame = static_cast<ma_uint64>(seconds * sampleRate);
+//
+//         result = ma_sound_seek_to_pcm_frame(&currentSound, targetFrame);
+//
+//         if (result == MA_SUCCESS) {
+//             std::cout << "Successfully jumped to " << seconds << " seconds.\n";
+//         }
+//         else {
+//             std::cerr << "Failed to seek to " << seconds << '\n';
+//         }
+//     }
+// }
 
 // needed utils
 float SoundManager::getSoundDuration() {
@@ -383,7 +383,7 @@ void SoundManager::pollEvents(const Event event)
             pauseSound(); break;
 
         case SetVolume: setVolume(std::get<float>(event.eventData)); break;
-        case Seek: seekToTimestamp(std::get<float>(event.eventData)); break;
+        // case Seek: seekToTimestamp(std::get<float>(event.eventData)); break;
 
         case SelectSound: // select sound
             unloadSound();
