@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(ZLIB REQUIRED)
 find_package(TagLib REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
     message(STATUS "Cross-compiling for Windows: Fetching windows-compatible Slint sources.")
@@ -14,11 +15,14 @@ if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
         message(STATUS "COMPILING FOR WIN-X64")
 
         set(TARGET_RUST_TRIPLET "x86_64-pc-windows-gnu")
+        set(CMAKE_RC_COMPILER "x86_64-w64-mingw32-windres")
 
     elseif(CMAKE_CXX_COMPILER MATCHES "i686-w64-mingw32")
         message(STATUS "COMPILING FOR WIN-X86")
 
         set(TARGET_RUST_TRIPLET "i686-pc-windows-gnu")
+        set(CMAKE_RC_COMPILER "i686-w64-mingw32-windres")
+
     endif()
     set(Rust_CARGO_TARGET "${TARGET_RUST_TRIPLET}" CACHE STRING "" FORCE)
     set(RUST_CARGO_TARGET "${TARGET_RUST_TRIPLET}"  CACHE STRING "" FORCE)
@@ -48,8 +52,13 @@ add_executable(OpenPlayer
         src/soundManager.cpp
         src/utils.cpp
         src/eventManager.cpp
+        src/configManager.cpp
         src/miniaudio_impl.cpp
 )
+if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
+    enable_language(RC)
+    target_sources(OpenPlayer PRIVATE assets/win_icon.rc)
+endif()
 
 if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
     set(LINKS_DIR "${CMAKE_CURRENT_BINARY_DIR}/slint_headers")
@@ -73,6 +82,7 @@ target_include_directories(OpenPlayer PRIVATE include)
 target_link_libraries(OpenPlayer PRIVATE
         Slint::Slint
         TagLib::tag
+        nlohmann_json::nlohmann_json
 )
 
 if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)

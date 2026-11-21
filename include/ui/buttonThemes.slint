@@ -1,11 +1,11 @@
-import { Button, VerticalBox, HorizontalBox, TabWidget, ScrollView, ListView, Palette, Slider } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, TabWidget, ScrollView, ListView, Palette, Slider, LineEdit, GridBox } from "std-widgets.slint";
 
 export global Theme {
-    out property <color> background-main: rgb(32, 32, 43);
-    out property <color> background-panel: rgba(17, 17, 27, 0.8);
-    out property <color> border-sublte: Palette.border;
-    out property <color> text-primary: rgb(215, 215, 247);
-    out property <color> button-normal: Palette.control-background;
+    in-out property <color> background-main: rgb(32, 32, 43);
+    in-out property <color> background-panel: rgba(17, 17, 27, 0.8);
+    in-out property <color> border-sublte: Palette.border;
+    in-out property <color> text-primary: rgb(215, 215, 247);
+    in-out property <color> button-normal: Palette.control-background;
     out property <color> button-selected: Palette.control-background.darker(0.65);
     out property <color> button-hover: Palette.control-background.brighter(0.65);
 }
@@ -92,7 +92,6 @@ export component ScrollableSelectionBox inherits Rectangle {
 
     height: 36px;
     border-width: 1px;
-    border-color: Theme.border-sublte;
     border-radius: 4px;
     background: touch.has-hover ? Theme.button-hover : Theme.button-normal;
 
@@ -125,7 +124,6 @@ export component ScrollableSelectionBox inherits Rectangle {
         Rectangle {
             background: Theme.background-panel;
             border-width: 1px;
-            border-color: Theme.border-sublte;
             border-radius: 4px;
 
             ListView {
@@ -155,15 +153,17 @@ export component LeftInterface inherits Rectangle {
     in property <[string]> playlists;
     callback playlist_set(int);
 
-    in property <bool> library-active: false;
-    callback toggle-library();
+    in property <int> current-tab;
+    callback set-tab(int);
 
     in property <bool> is-playing: false;
 
     background: Theme.background-panel;
     width: 180px;
-    height: 100%;
+    vertical-stretch: 1;
     border-radius: 4px;
+    border-width: 1px;
+    border-color: Theme.border-sublte;
 
     ScrollView {
         width: 100%;
@@ -187,11 +187,11 @@ export component LeftInterface inherits Rectangle {
             }
 
             CustomButton {
-                text: "\u{000F024B} Library";
-                selected: root.library-active;
+                text: "\u{e615} Config";
+                selected: root.current-tab == 1;
 
                 clicked => {
-                    root.toggle-library();
+                    root.set-tab(1);
                 }
             }
             ScrollableSelectionBox {
@@ -199,6 +199,7 @@ export component LeftInterface inherits Rectangle {
                 model: playlists;
 
                 select(idx, text) => {
+                    root.set-tab(0);
                     root.playlist_set(idx);
                 }
             }
@@ -228,6 +229,7 @@ export component SoundsInterface inherits Rectangle {
     max-width: 100000px;
     background: Theme.background-panel;
     border-radius: 4px;
+    border-width: 1px;
     border-color: Theme.border-sublte;
 
     // Music art and queue
@@ -320,6 +322,8 @@ export component SoundsInterface inherits Rectangle {
             background: Theme.background-panel;
             vertical-stretch: 1;
             border-radius: 4px;
+            border-width: 1px;
+            border-color: Theme.border-sublte;
 
             scroll := ScrollView {
                 width: 100%;
@@ -345,10 +349,136 @@ export component SoundsInterface inherits Rectangle {
     }
 }
 
-export component LibraryInterface inherits Rectangle {
+export component ConfigBlock inherits Rectangle {
+    in property <string> property-name: "Property";
+    in-out property <string> property-value: "Value";
+    callback value-edited(string);
+
+    height: 75px;
+
+    border-width: 1px;
+    border-radius: 4px;
+    background: Theme.button-normal;
+
+    VerticalBox {
+        Text {
+            text: property-name;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            color: Theme.text-primary;
+        }
+        LineEdit {
+            placeholder-text: property-value;
+            horizontal-alignment: center;
+            accepted(new-text) => {
+                root.property-value = new-text;
+                root.value-edited(new-text);
+            }
+        }
+    }
+}
+
+export struct ConfigProperty {
+    name: string,
+    value: string
+}
+export component ConfigInterface inherits Rectangle {
+    in-out property <[ConfigProperty]> config-properties;
+    callback config-changed(string, string);
+
     min-width: 0px;
     max-width: 10000px;
     background: Theme.background-panel;
     border-radius: 4px;
+    border-width: 1px;
     border-color: Theme.border-sublte;
+
+    ScrollView {
+        GridBox {
+            spacing: 10px;
+
+            for prop[index] in config-properties : ConfigBlock {
+                row: Math.floor(index / 3);
+                col: Math.mod(index, 3);
+
+                property-name: prop.name;
+                property-value: prop.value;
+
+                value-edited(new-value) => {
+                    root.config-changed(prop.name, new-value);
+                }
+            }
+        }
+    }
+}
+
+export component ContentArea inherits Rectangle {
+    min-width: 0px;
+    max-width: 100000px;
+
+    in-out property <[ConfigProperty]> config-properties;
+
+    in property <int> current-tab: 0; // 0 = default, 1 = Settings
+
+    in property <string> current-sound: "Loading..."; // CurrentImage {
+    in property <image> current-image; // Current song image
+    in property <string> toggle-button: "Loading..";
+
+    in property <bool> is-playing: false;
+
+    in property <string> current-time-text: "0:00";
+    in property <string> total-time-text: "0:00";
+    in-out property <float> volume: 1.0;
+
+    in property <[string]> playlists;
+    in property <[PendingSong]> pendingSongs: [];
+
+    callback playlist_set(int);
+    callback song_set(int);
+    callback next-song();
+    callback previous-song();
+    callback toggle-music();
+    callback volume-changed(float);
+
+    callback config-changed(string, string);
+
+    if root.current-tab == 0 : SoundsInterface {
+        width: 100%; height: 100%;
+
+        current-image: current-image;
+        current-sound: current-sound;
+        pendingSongs: pendingSongs;
+        toggle-button: toggle-button;
+
+        previous-song => {
+            root.previous-song();
+        }
+        next-song => {
+            root.next-song();
+        }
+        toggle-music => {
+            root.toggle-music();
+        }
+        song-set(index) =>  {
+            root.song_set(index);
+        }
+
+        current-time-text: current-time-text;
+        total-time-text: total-time-text;
+        volume <=> root.volume;
+
+        volume-changed(val) => {
+            root.volume-changed(val)
+        }
+    }
+
+    if root.current-tab == 1 : ConfigInterface {
+        width: 100%; height: 100%;
+
+        config-properties: config-properties;
+
+        config-changed(name, value) => {
+            config-changed(name, value); // check what changed on ui and set the change if valid
+        }
+    }
 }

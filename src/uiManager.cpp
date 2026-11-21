@@ -8,7 +8,33 @@
 #include <atomic>
 #include <chrono>
 
-UiManager::UiManager(SoundManager* soundManager) : ui(OpenPlayerUI::create()) {
+UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager) : ui(OpenPlayerUI::create()) {
+
+    // CONFIG SETUP
+    this->configManager = configManager;
+    this->configManager->loadConfig();
+
+    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
+    for (const auto& [key, val] : this->configManager->getConfig().items()) {
+        std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
+
+        properties_model->push_back(ConfigProperty{
+            .name = slint::SharedString(key),
+            .value = slint::SharedString(val_str)
+        });
+    }
+
+    ui->set_config_properties(properties_model);
+    const auto& theme = ui->global<Theme>();
+
+    json config = this->configManager->getConfig();
+
+    theme.set_background_main(colorFromHex(config.value("background-main", "#20202b")));
+    theme.set_background_panel(colorFromHex(config.value("background-panel", "#11111bcc")));
+    theme.set_border_sublte(colorFromHex(config.value("border-color", "#9ab8ff")));
+    theme.set_text_primary(colorFromHex(config.value("text-primary", "#d7d7f7")));
+
+    // SONGS SETUP
     ui->set_current_sound("No song selected...");
     ui->set_current_image(slint::Image{});
     ui->set_toggle_button(ICON_PLAY);
@@ -67,6 +93,38 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
     ui->on_volume_changed([eventManager, soundManager, ui_weak](const float volume) {
         eventManager->fireEvent({ .eventData = volume, .eventTarget = SoundTarget, .eventId = SetVolume });
     });
+
+    // CONFIG STUFF
+    ui->on_config_changed([this](const slint::SharedString& name, const slint::SharedString& value) {
+
+        json configCopy = this->configManager->copyConfig();
+        configCopy[std::string(name)] = std::string(value);
+
+        this->configManager->writeConfig(configCopy);
+        reloadConfig();
+    });
+}
+
+void UiManager::reloadConfig() {
+    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
+    const auto& config = this->configManager->getConfig();
+
+    for (const auto& [key, val] : config.items()) {
+        std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
+
+        properties_model->push_back(ConfigProperty{
+            .name = slint::SharedString(key),
+            .value = slint::SharedString(val_str)
+        });
+    }
+
+    ui->set_config_properties(properties_model);
+
+    const auto& theme = ui->global<Theme>();
+    theme.set_background_main(colorFromHex(config.value("background-main", "#20202b")));
+    theme.set_background_panel(colorFromHex(config.value("background-panel", "#11111bcc")));
+    theme.set_border_sublte(colorFromHex(config.value("border-color", "#9ab8ff")));
+    theme.set_text_primary(colorFromHex(config.value("text-primary", "#d7d7f7")));
 }
 
 slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {

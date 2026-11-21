@@ -3,6 +3,8 @@
 #include "app_window.h"
 #include <slint/slint.h>
 
+#include "configManager.hpp"
+
 #include "soundManager.hpp"
 #include "eventManager.hpp"
 #include "EVENTS.h"
@@ -12,10 +14,13 @@ class UiManager {
         slint::ComponentHandle<OpenPlayerUI> ui;
         slint::Timer progressCheckTimer;
 
+        ConfigManager* configManager;
+
     public:
-        UiManager(SoundManager* soundManager); // setup ui
+        UiManager(SoundManager* soundManager, ConfigManager* configManager); // setup ui
         slint::ComponentWeakHandle<OpenPlayerUI> getWeakHandle();
         void setupEvents(EventManager* eventManager, SoundManager* soundManager);
+        void reloadConfig();
         void pollEvents(Event event, EventManager* eventManager, SoundManager* soundManager);
         void Run();
 };

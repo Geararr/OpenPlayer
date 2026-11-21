@@ -35,3 +35,5 @@ namespace SoundData {
     slint::Image GetImageFromBytes(const std::vector<uint8_t>& imageBytes, int maxDimension = 512);
     std::filesystem::path getExecDir();
 }
+
+slint::Color colorFromHex(std::string_view hex);

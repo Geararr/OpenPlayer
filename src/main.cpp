@@ -9,10 +9,12 @@
 #include "eventManager.hpp"
 #include "soundManager.hpp"
 #include "uiManager.hpp"
+#include "configManager.hpp"
 
 std::atomic<bool> programEnd(false);
 
 void eventUpdate(SoundManager *soundManager, UiManager *uiManager, EventManager *eventManager) {
+
   while (!programEnd.load()) {
     const Event updateEvent = eventManager->getEvent();
 
@@ -44,11 +46,15 @@ int main() {
     setenv("SLINT_BACKEND", "winit-skia", 1);
 #endif
 
+  ConfigManager configManager;
+  const std::filesystem::path configPath = SoundData::getExecDir() / "config/config.json";
+  configManager.setConfigPath(configPath);
+
   EventManager eventManager;
 
   SoundManager soundManager{&eventManager};
 
-  UiManager uiManager(&soundManager);
+  UiManager uiManager(&soundManager, &configManager); // load config in uiManager
   uiManager.setupEvents(&eventManager, &soundManager);
 
   std::thread soundThread(soundUpdate, &soundManager);
@@ -61,6 +67,7 @@ int main() {
 
   soundManager.END();
   eventManager.END();
+  configManager.saveConfig(); // save at the end
 
   if (eventThread.joinable()) {
     eventThread.join();

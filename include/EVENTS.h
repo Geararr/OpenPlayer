@@ -15,6 +15,5 @@ enum EventId {
     PreviousSound,
     ReloadPlaylist,
     StartProgressTimer,
-    StopProgressTimer,
-    Seek
+    StopProgressTimer
 };

@@ -176,17 +176,48 @@ slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes
 }
 
 std::filesystem::path SoundData::getExecDir() {
-#ifdef __EMSCRIPTEN__
-    return "/";
+#ifdef _WIN32
+    wchar_t path[MAX_PATH] = { 0 };
+    GetModuleFileNameW(nullptr, path, MAX_PATH);
+    return std::filesystem::path(path).parent_path();
 #else
-    #ifdef _WIN32
-        wchar_t path[MAX_PATH] = { 0 };
-        GetModuleFileNameW(nullptr, path, MAX_PATH);
-        return std::filesystem::path(path).parent_path();
-    #else
-        char result[PATH_MAX];
-        ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-        return std::filesystem::path(std::string(result, (count > 0) ? count : 0)).parent_path();
-    #endif
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    return std::filesystem::path(std::string(result, (count > 0) ? count : 0)).parent_path();
 #endif
+}
+
+slint::Color colorFromHex(std::string_view hex) {
+    if (!hex.empty() && hex.front() == '#') {
+        hex.remove_prefix(1);
+    }
+
+    auto parse_byte = [](const std::string_view pair) -> uint8_t {
+        unsigned int val = 0;
+        for (const char c : pair) {
+            val <<= 4;
+            if (c >= '0' && c <= '9') val |= static_cast<uint8_t>(c - '0');
+            else if (c >= 'a' && c <= 'f') val |= static_cast<uint8_t>(c - 'a' + 10);
+            else if (c >= 'A' && c <= 'F') val |= static_cast<uint8_t>(c - 'A' + 10);
+        }
+        return static_cast<uint8_t>(val);
+    };
+
+    if (hex.size() == 6) {
+        return slint::Color::from_rgb_uint8(
+            parse_byte(hex.substr(0, 2)),
+            parse_byte(hex.substr(2, 2)),
+            parse_byte(hex.substr(4, 2))
+        );
+    }
+    if (hex.size() == 8) {
+        return slint::Color::from_argb_uint8(
+            parse_byte(hex.substr(6, 2)),
+            parse_byte(hex.substr(0, 2)),
+            parse_byte(hex.substr(2, 2)),
+            parse_byte(hex.substr(4, 2))
+        );
+    }
+
+    return slint::Color();
 }

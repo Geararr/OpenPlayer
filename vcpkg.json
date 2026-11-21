@@ -2,6 +2,7 @@
   "name": "openplayer-slint",
   "version-string": "1.0.0",
   "dependencies": [
-    "taglib"
+    "taglib",
+    "nlohmann-json"
   ]
 }
