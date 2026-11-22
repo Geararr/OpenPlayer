@@ -2,7 +2,11 @@
   "name": "openplayer-slint",
   "version-string": "1.0.0",
   "dependencies": [
+    "nlohmann-json",
     "taglib",
-    "nlohmann-json"
+    {
+      "name": "libvips",
+      "features": ["cplusplus", "jpeg", "png", "webp"]
+    }
   ]
 }

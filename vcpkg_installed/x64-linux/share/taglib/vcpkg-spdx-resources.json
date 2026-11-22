@@ -1,0 +1,19 @@
+{
+  "packages": [
+{
+  "SPDXID" : "SPDXRef-resource-0",
+  "checksums" : 
+  [
+    {
+      "algorithm" : "SHA512",
+      "checksumValue" : "f3988a78692527af0cb006c2cf5767f2ca624a35eaf75a594ce29f26f8b8f233d9e79c7925305cb362fa600491a9b5f34a81b622b6456e62e32d94d769be3762"
+    }
+  ],
+  "copyrightText" : "NOASSERTION",
+  "downloadLocation" : "git+https://github.com/taglib/taglib@v2.3.1",
+  "licenseConcluded" : "NOASSERTION",
+  "licenseDeclared" : "NOASSERTION",
+  "name" : "taglib/taglib"
+}
+  ]
+}

@@ -23,8 +23,7 @@ class Sound {
     private:
         std::filesystem::path path;
         std::string name;
-        std::vector<uint8_t> coverBytes;
-        slint::Image coverImagePlaying;
+        const std::string assetKey;
         slint::Image coverImagePending;
 
     public:
@@ -32,7 +31,7 @@ class Sound {
 
         [[nodiscard]] std::filesystem::path& getSoundPath();
         [[nodiscard]] std::string getSoundName();
-        [[nodiscard]] slint::Image& getCoverImage(int which);
+        [[nodiscard]] slint::Image getCoverImage(int which);
 };
 
 class SoundManager {
@@ -53,14 +52,23 @@ class SoundManager {
         SoundSync sync;
 
         EventManager* eventManager = nullptr;
+        CacheManager* cacheManager = nullptr;
+
+        const std::vector<std::string> supportedExtensions = {
+            ".mp3",
+            ".wav",
+            ".flac"
+        };
 
     public:
-        explicit SoundManager(EventManager* eventManager);
+        explicit SoundManager(EventManager* eventManager, CacheManager* cacheManager);
         void Init(); // initialize sound engines
         ~SoundManager(); // uninitialize sound engine
 
         std::vector<std::filesystem::path> getPlaylists();
         int reloadSounds(int playlist); // searches assets/music/playlist folder for any music and loads them inside sounds array
+
+        bool playlistIsValid(const std::filesystem::path& playlist);
 
         [[nodiscard]] size_t getPlaylistSize() const;
         [[nodiscard]] Sound* getSound(int soundIndex) const;

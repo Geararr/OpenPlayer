@@ -3,7 +3,7 @@
 #include "app_window.h"
 #include <slint/slint.h>
 
-#include "configManager.hpp"
+#include "jsonManager.hpp"
 
 #include "soundManager.hpp"
 #include "eventManager.hpp"

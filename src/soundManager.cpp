@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <format>
 #include <thread>
+#include <cctype>
 
 
 #include "IconsProto.h"
@@ -11,9 +12,8 @@
 Sound::Sound(const std::filesystem::path& soundPath)
     : path(soundPath),
       name(soundPath.filename().string()),
-      coverBytes(SoundData::GetAudioCoverBytes(soundPath)),
-      coverImagePlaying(SoundData::GetImageFromBytes(coverBytes, 512)),
-      coverImagePending(SoundData::GetImageFromBytes(coverBytes, 128))
+      assetKey(soundPath.parent_path().filename().string() + '/' + soundPath.filename().string()),
+      coverImagePending(SoundData::GetImageFromBytes(assetKey, 64, path))
 {}
 
 std::filesystem::path& Sound::getSoundPath()
@@ -24,15 +24,19 @@ std::string Sound::getSoundName()
 {
     return name;
 }
-slint::Image& Sound::getCoverImage(const int which)
+slint::Image Sound::getCoverImage(const int which)
 {
-    return which ? coverImagePlaying : coverImagePending;
+    if (which == 1) {
+        return SoundData::GetImageFromBytes(assetKey, 256, path);
+    }
+    return coverImagePending;
 }
 
 // Constructor
-SoundManager::SoundManager(EventManager* eventManager)
+SoundManager::SoundManager(EventManager* eventManager, CacheManager* cacheManager)
 {
     this->eventManager = eventManager;
+    this->cacheManager = cacheManager;
 }
 
 void SoundManager::Init() {
@@ -43,20 +47,46 @@ void SoundManager::Init() {
     }
 }
 
+bool SoundManager::playlistIsValid(const std::filesystem::path& playlist) {
+    if (std::filesystem::is_directory(playlist)) {
+        for (const auto& entry : std::filesystem::directory_iterator(playlist)) {
+            if (entry.is_regular_file()) {
+                std::string extension = entry.path().extension().string();
+
+                std::ranges::transform(extension, extension.begin(),
+                [](const unsigned char c) { return static_cast<char>(std::tolower(c)); }
+                );
+
+                for (const auto& supportedExtension : supportedExtensions) {
+                    if (supportedExtension == extension) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 std::vector<std::filesystem::path> SoundManager::getPlaylists() {
     std::vector<std::filesystem::path> playlists;
     const std::filesystem::path playlistDir = SoundData::getExecDir() / "music";
 
     std::error_code ec;
     for (const auto& entry : std::filesystem::directory_iterator(playlistDir, ec)) {
-        if (entry.is_directory(ec)) {
+        if (playlistIsValid(entry.path())) {
             playlists.push_back(entry.path());
         }
     }
+
     return playlists;
 }
 
 int SoundManager::reloadSounds(const int playlist) {
+
+    const auto reloadStart = std::chrono::steady_clock::now();
+
     if (playlist != currentPlaylist) {
         const std::vector<std::filesystem::path> playlists = getPlaylists();
 
@@ -64,33 +94,48 @@ int SoundManager::reloadSounds(const int playlist) {
             return 0;
         }
 
-        const std::filesystem::path& rPlaylist = playlists.at(playlist);
+        const std::filesystem::path& musicDir = playlists.at(playlist);
 
         std::cout << "Selected playlist -> "
-                  << rPlaylist.string()
+                  << musicDir.string()
                   << '\n';
-
-        std::filesystem::path musicDir = SoundData::getExecDir() / "music" / rPlaylist;
 
         if (std::filesystem::exists(musicDir) && std::filesystem::is_directory(musicDir))
         {
             std::cout << "Dir exists!\n";
-            if (!std::filesystem::is_empty(musicDir)) {
+            if (playlistIsValid(musicDir)) {
                 sounds.clear();
-                sounds.shrink_to_fit();
 
                 for (const auto& entry : std::filesystem::directory_iterator(musicDir))
                 {
                     if (entry.is_regular_file())
                     {
-                        std::cout << "Sound exists -> " << entry.path().filename().string() << '\n';
-                        sounds.push_back(std::make_unique<Sound>(entry.path()));
+                        std::string extension = entry.path().extension().string();
+
+                        std::ranges::transform(extension, extension.begin(),
+                        [](const unsigned char c) { return static_cast<char>(std::tolower(c)); }
+                        );
+
+                        for (const auto& supportedExtension : supportedExtensions) {
+                            if (supportedExtension == extension) {
+                                sounds.push_back(std::make_unique<Sound>(entry.path()));
+                                break;
+                            }
+                        }
                     }
                 }
 
                 currentPlaylist = playlist;
 
+                if (cacheManager) {
+                    cacheManager->saveCache();
+                }
+
                 std::cout << "Reloaded Sounds.\n";
+                const auto reloadEnd = std::chrono::steady_clock::now();
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(reloadEnd - reloadStart);
+
+                std::cout << "Finnished in -> " << elapsed.count() << " ms\n";
                 return 1;
             }
             else {

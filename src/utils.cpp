@@ -1,178 +1,259 @@
 #include "utils.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize2.h"
-
 #include <random>
+#include <unordered_map>
 #include <filesystem>
 #include <slint/slint.h>
+#include <malloc.h>
 
 #include <cstring>
 
-slint::Image CreateNoiseImage(const uint32_t width = 128, const uint32_t height = 128) {
-    slint::SharedPixelBuffer<slint::Rgba8Pixel> pixelBuffer(width, height);
+using PixelBuffer = slint::SharedPixelBuffer<slint::Rgba8Pixel>;
+using AudioCoverBytes = std::vector<uint8_t>;
+
+void SoundData::setCacheManager(CacheManager *cacheManager) {
+    cacheManager_ = cacheManager;
+}
+
+bool SoundData::LruImageCache::get(const std::string& key, slint::Image& outImage) {
+    const auto it = map_.find(key);
+    if (it == map_.end()) return false;
+
+    items_.splice(items_.begin(), items_, it->second);
+    outImage = slint::Image(it->second->buffer);
+    return true;
+}
+slint::Image SoundData::LruImageCache::put(const std::string& key, slint::SharedPixelBuffer<slint::Rgba8Pixel> buffer) {
+    const size_t entryBytes = static_cast<size_t>(buffer.width()) * buffer.height() * sizeof(slint::Rgba8Pixel);
+
+    if (const auto it = map_.find(key); it != map_.end()) {
+        currentBytes_ -= it->second->bytes;
+        items_.erase(it->second);
+        map_.erase(it);
+    }
+
+    while (!items_.empty() && currentBytes_ + entryBytes > maxBytes_) {
+        const auto& last = items_.back();
+        currentBytes_ -= last.bytes;
+        map_.erase(last.key);
+        items_.pop_back();
+    }
+
+    items_.push_front(Entry{.key = key, .buffer = std::move(buffer), .bytes = entryBytes});
+    map_[key] = items_.begin();
+    currentBytes_ += entryBytes;
+
+    return slint::Image(items_.front().buffer);
+}
+
+slint::Image CreateNoiseImage(const std::string& assetKey, const uint32_t width = 128, const uint32_t height = 128) {
+    static SoundData::LruImageCache noiseCache(2 * 1024 * 1024);
+
+    const std::string fullKey = assetKey + '_' + std::to_string(width) + 'x' + std::to_string(height);
+
+    slint::Image noiseImage;
+    if (noiseCache.get(fullKey, noiseImage)) {
+        return noiseImage;
+    }
+
+    PixelBuffer pixelBuffer(width, height);
 
     static thread_local std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> dist(0, 255);
 
-    for (auto& pixel : pixelBuffer) {
-        pixel.r = static_cast<uint8_t>(dist(rng));
-        pixel.g = static_cast<uint8_t>(dist(rng));
-        pixel.b = static_cast<uint8_t>(dist(rng));
-        pixel.a = 255;
+    for (auto* pixel = pixelBuffer.begin(); pixel != pixelBuffer.end(); ++pixel) {
+        pixel->r = static_cast<uint8_t>(dist(rng));
+        pixel->g = static_cast<uint8_t>(dist(rng));
+        pixel->b = static_cast<uint8_t>(dist(rng));
+        pixel->a = 255;
     }
 
-    return {pixelBuffer};
+    return noiseCache.put(fullKey, std::move(pixelBuffer));
 }
 
-std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::filesystem::path& filePath)
-{
-    std::vector<uint8_t> imageBytes;
-    if (filePath.empty()) return imageBytes;
+
+TagLib::ByteVector getID3v2Image(const TagLib::ID3v2::Tag* tag) {
+    if (!tag) return {};
+    auto frames = tag->frameListMap()["APIC"];
+    if (frames.isEmpty()) return {};
+
+    auto* picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame*>(frames.front());
+    return picFrame ? picFrame->picture() : TagLib::ByteVector();
+}
+
+std::vector<uint8_t> SoundData::GetAudioCoverBytes(const std::string& assetKey,  const std::filesystem::path& filePath) {
+    if (filePath.empty()) return {};
 
     const TagLib::FileRef f(filePath.c_str());
+    if (f.isNull() || !f.file() || !f.file()->isValid()) {
+        return {};
+    }
 
-    if (f.isNull() || !f.file() || !f.file()->isValid()) return imageBytes;
-
-    const std::string filename = filePath.filename().string();
-
+    TagLib::ByteVector rawCover;
     TagLib::File* filePtr = f.file();
 
     std::string ext = filePath.extension().string();
-    std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::ranges::transform(ext, ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
-    // mp3
-    if (ext == ".mp3")
-    {
-
-        if (auto* mpegFile = dynamic_cast<TagLib::MPEG::File*>(f.file()))
-        {
-            auto* id3v2Tag = mpegFile->ID3v2Tag();
-            if (id3v2Tag)
-            {
-                const auto& frames = id3v2Tag->frameList("APIC");
-                if (!frames.isEmpty()) {
-                    TagLib::ID3v2::AttachedPictureFrame* bestFrame = nullptr;
-
-                    for (auto* frame : frames) {
-                        auto* picFrame = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame*>(frame);
-                        if (picFrame) {
-                            if (picFrame->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover) {
-                                bestFrame = picFrame;
-                                break;
-                            }
-                            if (!bestFrame) {
-                                bestFrame = picFrame;
-                            }
-                        }
-                    }
-
-                    if (bestFrame) {
-                        #if TAGLIB_VERSION >= 0x020000
-                            auto dataView = bestFrame->picture();
-                            imageBytes.assign(dataView.begin(), dataView.end());
-                        #else
-                            const TagLib::ByteVector& data = bestFrame->picture();
-                            imageBytes.assign(data.data(), data.data() + data.size());
-                        #endif
+    if (ext == ".mp3") {
+        if (auto* mp3File = dynamic_cast<TagLib::MPEG::File*>(filePtr)) {
+            rawCover = getID3v2Image(mp3File->ID3v2Tag());
+        }
+    }
+    else if (ext == ".wav") {
+        if (const auto* wavFile = dynamic_cast<TagLib::RIFF::WAV::File*>(filePtr)) {
+            rawCover = getID3v2Image(wavFile->ID3v2Tag());
+        }
+    }
+    else if (ext == ".flac") {
+        if (auto* flacFile = dynamic_cast<TagLib::FLAC::File*>(filePtr)) {
+            if (const auto& picList = flacFile->pictureList(); !picList.isEmpty()) {
+                rawCover = picList.front()->data();
+            }
+            if (rawCover.isEmpty()) {
+                rawCover = getID3v2Image(flacFile->ID3v2Tag());
+            }
+        }
+    }
+    else if (ext == ".mp4" || ext == ".m4a") {
+        if (const auto* mp4File = dynamic_cast<TagLib::MP4::File*>(filePtr)) {
+            if (const auto* tag = mp4File->tag()) {
+                if (tag->contains("covr")) {
+                    const auto coverList = tag->item("covr").toCoverArtList();
+                    if (!coverList.isEmpty()) {
+                        rawCover = coverList.front().data();
                     }
                 }
             }
         }
     }
+    if (rawCover.isEmpty()) return {};
 
-    // mp4
-    else if (auto* mp4File = dynamic_cast<TagLib::MP4::File*>(filePtr))
-    {
-        std::cout << "Getting audio cover bytes for mp4 -> " << filename << '\n';
-        if (mp4File->tag())
-        {
-            auto itemMap = mp4File->tag()->itemMap();
-            if (itemMap.contains("covr"))
-            {
-                auto coverList = itemMap["covr"].toCoverArtList();
-                if (!coverList.isEmpty())
-                {
-                    std::cout << "Cover list not empty\n";
-                    #if TAGLIB_VERSION >= 0x020000
-                        auto dataView = coverList.front().image();
-                        imageBytes.assign(dataView.begin(), dataView.end());
-                    #else
-                        const TagLib::ByteVector& data = coverList.front().data();
-                        imageBytes.assign(data.data(), data.data() + data.size());
-                    #endif
-                }
-            }
-        }
-    }
-    return imageBytes;
+    return {
+        reinterpret_cast<const uint8_t*>(rawCover.data()),
+        reinterpret_cast<const uint8_t*>(rawCover.data()) + rawCover.size()
+    };
 }
 
-slint::Image SoundData::GetImageFromBytes(const std::vector<uint8_t>& imageBytes, const int maxDimension)
+static slint::SharedPixelBuffer<slint::Rgba8Pixel> VImageToSlintBuffer(vips::VImage image) {
+    if (image.interpretation() != VIPS_INTERPRETATION_sRGB) {
+        image = image.colourspace(VIPS_INTERPRETATION_sRGB);
+    }
+    if (image.format() != VIPS_FORMAT_UCHAR) {
+        image = image.cast(VIPS_FORMAT_UCHAR);
+    }
+    if (image.bands() == 3) {
+        image = image.bandjoin(255);
+    }
+    else if (image.bands() > 4) {
+        image = image.extract_band(0, vips::VImage::option()->set("n", 4));
+    }
+
+    const auto w = static_cast<uint32_t>(image.width());
+    const auto h = static_cast<uint32_t>(image.height());
+    slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(w, h);
+
+    size_t memorySize = 0;
+    void* rawPixels = image.write_to_memory(&memorySize);
+    if (memorySize == w * h * sizeof(slint::Rgba8Pixel)) {
+        std::memcpy(pixel_buffer.begin(), rawPixels, memorySize);
+    }
+    g_free(rawPixels);
+    return pixel_buffer;
+}
+
+slint::Image SoundData::GetImageFromBytes(const std::string& assetKey, const int maxDimension, const std::filesystem::path& filePath)
 {
-    if (imageBytes.empty()) {
-        return CreateNoiseImage();
+    static LruImageCache imageCache(16 * 1024 * 1024);
+
+    const std::string fullKey = assetKey + '_' + std::to_string(maxDimension);
+
+    slint::Image cachedImg;
+    if (imageCache.get(fullKey, cachedImg)) {
+        return cachedImg;
     }
 
-    int width = 0;
-    int height = 0;
-    int channels = 0;
+    std::filesystem::path thumbDir = getExecDir() / "cache";
 
-    if (!stbi_info_from_memory(imageBytes.data(), static_cast<int>(imageBytes.size()), &width, &height, &channels)) {
-        std::cerr << "Failed to decode image data!\n";
-        return CreateNoiseImage();
+    json entry = cacheManager_->getEntry(assetKey);
+    if (!entry.is_object()) {
+        entry = json::object();
     }
-    if (width <= 0 || height <= 0 || width > 4096 || height > 4096) {
-        std::cerr << "Image dimensions are too large!\n";
-        return CreateNoiseImage();
-    }
-
-    unsigned char* decoded_pixels = stbi_load_from_memory(
-        imageBytes.data(),
-        static_cast<int>(imageBytes.size()),
-        &width,
-        &height,
-        &channels,
-        4
-    );
-
-    if (!decoded_pixels) {
-        std::cerr << "Failed to decode image: " << stbi_failure_reason() << '\n';
-        return CreateNoiseImage();
-    }
-
-    if (width > maxDimension || height > maxDimension) {
-        const float scale = static_cast<float>(maxDimension) / std::max(width, height);
-        const int targetW = std::max(1, static_cast<int>(width * scale));
-        const int targetH = std::max(1, static_cast<int>(height * scale));
-
-        slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(targetW, targetH);
-
-        void* result = stbir_resize_uint8_srgb(
-            decoded_pixels, width, height, 0,
-            reinterpret_cast<unsigned char *>(pixel_buffer.begin()), targetW, targetH, 0,
-            STBIR_RGBA
-        );
-
-        if (!result) {
-            std::cerr << "Image resizing failed!\n";
-            return CreateNoiseImage();
+    if (!entry.is_null() && entry.contains("hasCover")) {
+        if (!entry["hasCover"].get<bool>()) {
+            return CreateNoiseImage(assetKey);
         }
 
-        stbi_image_free(decoded_pixels);
-        return slint::Image(pixel_buffer);
+        if (entry.contains("coverHash")) {
+            const std::string coverHash = entry["coverHash"].get<std::string>();
+            const std::string hashKey = coverHash + '_' + std::to_string(maxDimension);
+
+            if (imageCache.get(hashKey, cachedImg)) {
+                return cachedImg;
+            }
+
+            const std::filesystem::path thumbPath = thumbDir/ (coverHash + '_' + std::to_string(maxDimension) + ".webp");
+            if (std::filesystem::exists(thumbPath)) {
+                try {
+                    const auto u8Path = thumbPath.u8string();
+                    vips::VImage diskImg = vips::VImage::new_from_file(
+                        reinterpret_cast<const char*>(u8Path.c_str())
+                    );
+                    return imageCache.put(fullKey, VImageToSlintBuffer(diskImg));
+                } catch (const vips::VError&) {
+                    // corrupted thumbnail -> rebuild
+                }
+            }
+        }
     }
 
-    slint::SharedPixelBuffer<slint::Rgba8Pixel> pixel_buffer(width, height);
+    const std::vector<uint8_t>& imageBytes = GetAudioCoverBytes(assetKey, filePath);
+    if (imageBytes.empty()) {
+        entry["hasCover"] = false;
+        cacheManager_->setEntry(assetKey, entry);
+        return CreateNoiseImage(assetKey);
+    }
 
-    const size_t byteCount = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
-    std::memcpy(pixel_buffer.begin(), decoded_pixels, byteCount);
+    const std::string_view byteView(reinterpret_cast<const char*>(imageBytes.data()), imageBytes.size());
+    const std::string coverHash = std::to_string(std::hash<std::string_view>{}(byteView));
+    const std::filesystem::path thumbPath = thumbDir / (coverHash + '_' + std::to_string(maxDimension) + ".webp");
+    const auto u8Path = thumbPath.u8string();
 
-    stbi_image_free(decoded_pixels);
-    return slint::Image(pixel_buffer);
+    try {
+        if (std::filesystem::exists(thumbPath)) {
+            vips::VImage diskImg = vips::VImage::new_from_file(
+                reinterpret_cast<const char*>(u8Path.c_str())
+            );
+            entry["hasCover"] = true;
+            entry["coverHash"] = coverHash;
+            cacheManager_->setEntry(assetKey, entry);
+            return imageCache.put(fullKey, VImageToSlintBuffer(diskImg));
+        }
+
+        vips::VImage image = vips::VImage::new_from_buffer(imageBytes.data(), imageBytes.size(), "")
+            .thumbnail_image(
+                maxDimension,
+                vips::VImage::option()
+                    ->set("height", maxDimension)
+                    ->set("size", VIPS_SIZE_DOWN)
+            );
+
+        std::filesystem::create_directories(thumbDir);
+        image = image.copy_memory();
+        image.webpsave(
+            reinterpret_cast<const char*>(u8Path.c_str()),
+            vips::VImage::option()->set("Q", 90)
+        );
+
+        entry["hasCover"] = true;
+        entry["coverHash"] = coverHash;
+        cacheManager_->setEntry(assetKey, entry);
+
+        return imageCache.put(fullKey, VImageToSlintBuffer(image));
+    } catch (const vips::VError& err) {
+        std::cerr << "Failed to decode image with libvips -> " << err.what() << '\n';
+        return CreateNoiseImage(assetKey);
+    }
 }
 
 std::filesystem::path SoundData::getExecDir() {
@@ -182,7 +263,7 @@ std::filesystem::path SoundData::getExecDir() {
     return std::filesystem::path(path).parent_path();
 #else
     char result[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    const ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     return std::filesystem::path(std::string(result, (count > 0) ? count : 0)).parent_path();
 #endif
 }
@@ -219,5 +300,5 @@ slint::Color colorFromHex(std::string_view hex) {
         );
     }
 
-    return slint::Color();
+    return {};
 }

@@ -191,10 +191,10 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
 
                         // load all other songs (if any)
                         const auto pendingSongs = std::make_shared<slint::VectorModel<PendingSong>>();
-                        for (const auto& track : tracks) {
+                        for (const auto&[name, image] : tracks) {
                             pendingSongs->push_back(PendingSong{
-                                .image = track.image,
-                                .title = static_cast<slint::SharedString>(track.name)
+                                .image = image,
+                                .title = static_cast<slint::SharedString>(name)
                             });
                         }
                         ui_strong->set_pendingSongs(pendingSongs);
