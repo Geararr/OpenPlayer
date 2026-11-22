@@ -9,48 +9,88 @@ LINUX_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"
 LINUX_DEBUG_BUILD_EXE = SCRIPT_DIR / "build/linux-debug/OpenPlayer"
 LINUX_DEBUG_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"
 
-WINDOWS_X64_BUILD_EXE = SCRIPT_DIR / "build/windows-rel-x64/OpenPlayer.exe"
+import subprocess
+
+def get_required_dlls(entry_binaries: list[Path], search_dirs: list[Path], objdump: str) -> list[Path]:
+    # Map lowercase dll filename -> actual Path on disk (first dir in search_dirs takes priority)
+    available_dlls: dict[str, Path] = {}
+    for folder in reversed(search_dirs):
+        if folder.exists():
+            for dll in folder.glob("*.dll"):
+                available_dlls[dll.name.lower()] = dll
+
+    resolved: dict[str, Path] = {}
+    queue = list(entry_binaries)
+    visited = set()
+
+    while queue:
+        binary = queue.pop(0)
+        if binary in visited or not binary.exists():
+            continue
+        visited.add(binary)
+
+        out = subprocess.check_output([objdump, "-p", str(binary)], text=True, stderr=subprocess.DEVNULL)
+        for line in out.splitlines():
+            line = line.strip()
+            if line.startswith("DLL Name:"):
+                dll_name = line.split(":", 1)[1].strip().lower()
+                if dll_name in available_dlls and dll_name not in resolved:
+                    dll_path = available_dlls[dll_name]
+                    resolved[dll_name] = dll_path
+                    queue.append(dll_path)
+
+    return list(resolved.values())
+
+# --- Windows x64 Release ---
+WINDOWS_X64_BUILD_DIR = SCRIPT_DIR / "build/windows-rel-x64"
+WINDOWS_X64_BUILD_EXE = WINDOWS_X64_BUILD_DIR / "OpenPlayer.exe"
 WINDOWS_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64"
+WINDOWS_X64_SLINT_DLL = WINDOWS_X64_BUILD_DIR / "_deps/slint-build/slint_cpp.dll"
 WINDOWS_X64_DLLS = [
-    "/usr/x86_64-w64-mingw32/bin/libstdc++-6.dll",
-    SCRIPT_DIR / "build/windows-rel-x64/_deps/slint-build/slint_cpp.dll",
-    "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libtag.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libtag_c.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libz.dll",
-    "/usr/x86_64-w64-mingw32/bin/libssp-0.dll",
-    "/usr/x86_64-w64-mingw32/bin/zlib1.dll",
-    "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll",
-    "./build/windows-rel-x64/libglib-2.0-0.dll"
-]
-WINDOWS_DEBUG_X64_BUILD_EXE = SCRIPT_DIR / "build/windows-debug-x64/OpenPlayer.exe"
-WINDOWS_DEBUG_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64_DEBUG"
-WINDOWS_DEBUG_X64_DLLS = [
-    "/usr/x86_64-w64-mingw32/bin/libstdc++-6.dll",
-    SCRIPT_DIR / "build/windows-rel-x64/_deps/slint-build/slint_cpp.dll",
-    "/usr/x86_64-w64-mingw32/bin/libwinpthread-1.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libtag.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libtag_c.dll",
-    "build/windows-rel-x64/vcpkg_installed/x64-mingw-dynamic/bin/libz.dll",
-    "/usr/x86_64-w64-mingw32/bin/libssp-0.dll",
-    "/usr/x86_64-w64-mingw32/bin/zlib1.dll",
-    "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll",
-    "./build/windows-debug-x64/vcpkg_installed/x64-mingw-dynamic/debug/bin/libglib-2.0-0.dll"
+    WINDOWS_X64_SLINT_DLL,
+    *get_required_dlls(
+        entry_binaries=[WINDOWS_X64_BUILD_EXE, WINDOWS_X64_SLINT_DLL],
+        search_dirs=[
+            WINDOWS_X64_BUILD_DIR / "vcpkg_installed/x64-mingw-dynamic/bin",
+            Path("/usr/x86_64-w64-mingw32/bin"),
+            ],
+        objdump="x86_64-w64-mingw32-objdump",
+    ),
 ]
 
-WINDOWS_X86_BUILD_EXE = SCRIPT_DIR / "build/windows-rel-x86/OpenPlayer.exe"
+# --- Windows x64 Debug ---
+WINDOWS_DEBUG_X64_BUILD_DIR = SCRIPT_DIR / "build/windows-debug-x64"
+WINDOWS_DEBUG_X64_BUILD_EXE = WINDOWS_DEBUG_X64_BUILD_DIR / "OpenPlayer.exe"
+WINDOWS_DEBUG_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64_DEBUG"
+WINDOWS_DEBUG_X64_SLINT_DLL = WINDOWS_DEBUG_X64_BUILD_DIR / "_deps/slint-build/slint_cpp.dll"
+WINDOWS_DEBUG_X64_DLLS = [
+    WINDOWS_DEBUG_X64_SLINT_DLL,
+    *get_required_dlls(
+        entry_binaries=[WINDOWS_DEBUG_X64_BUILD_EXE, WINDOWS_DEBUG_X64_SLINT_DLL],
+        search_dirs=[
+            WINDOWS_DEBUG_X64_BUILD_DIR / "vcpkg_installed/x64-mingw-dynamic/debug/bin",
+            WINDOWS_DEBUG_X64_BUILD_DIR / "vcpkg_installed/x64-mingw-dynamic/bin",
+            Path("/usr/x86_64-w64-mingw32/bin"),
+            ],
+        objdump="x86_64-w64-mingw32-objdump",
+    ),
+]
+
+# --- Windows x86 Release ---
+WINDOWS_X86_BUILD_DIR = SCRIPT_DIR / "build/windows-rel-x86"
+WINDOWS_X86_BUILD_EXE = WINDOWS_X86_BUILD_DIR / "OpenPlayer.exe"
 WINDOWS_X86_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x86"
+WINDOWS_X86_SLINT_DLL = WINDOWS_X86_BUILD_DIR / "_deps/slint-build/slint_cpp.dll"
 WINDOWS_X86_DLLS = [
-    "/usr/i686-w64-mingw32/bin/libstdc++-6.dll",
-    SCRIPT_DIR / "build/windows-rel-x86/_deps/slint-build/slint_cpp.dll",
-    "/usr/i686-w64-mingw32/bin/libwinpthread-1.dll",
-    "build/windows-rel-x86/vcpkg_installed/x86-mingw-dynamic/bin/libtag.dll",
-    "build/windows-rel-x86/vcpkg_installed/x86-mingw-dynamic/bin/libtag_c.dll",
-    "build/windows-rel-x86/vcpkg_installed/x86-mingw-dynamic/bin/libz.dll",
-    "/usr/i686-w64-mingw32/bin/libssp-0.dll",
-    "/usr/i686-w64-mingw32/bin/zlib1.dll",
-    "/usr/i686-w64-mingw32/bin/libgcc_s_dw2-1.dll",
-    "./build/windows-rel-x86/libglib-2.0-0.dll"
+    WINDOWS_X86_SLINT_DLL,
+    *get_required_dlls(
+        entry_binaries=[WINDOWS_X86_BUILD_EXE, WINDOWS_X86_SLINT_DLL],
+        search_dirs=[
+            WINDOWS_X86_BUILD_DIR / "vcpkg_installed/x86-mingw-dynamic/bin",
+            Path("/usr/i686-w64-mingw32/bin"),
+            ],
+        objdump="i686-w64-mingw32-objdump",
+    ),
 ]
 
 lxExportZip = Path(f"{LINUX_EXPORT_DIR}.zip")

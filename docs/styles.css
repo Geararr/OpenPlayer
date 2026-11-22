@@ -54,6 +54,9 @@ body {
     margin: 0 auto;
     padding-top: 23px;
 }
+.op-player-img:hover {
+    transform: translateY(40px);
+}
 .op-player-img img {
     display: block;
     width: 650px;
