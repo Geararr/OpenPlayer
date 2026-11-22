@@ -12,7 +12,6 @@ LINUX_DEBUG_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"
 import subprocess
 
 def get_required_dlls(entry_binaries: list[Path], search_dirs: list[Path], objdump: str) -> list[Path]:
-    # Map lowercase dll filename -> actual Path on disk (first dir in search_dirs takes priority)
     available_dlls: dict[str, Path] = {}
     for folder in reversed(search_dirs):
         if folder.exists():
@@ -41,7 +40,6 @@ def get_required_dlls(entry_binaries: list[Path], search_dirs: list[Path], objdu
 
     return list(resolved.values())
 
-# --- Windows x64 Release ---
 WINDOWS_X64_BUILD_DIR = SCRIPT_DIR / "build/windows-rel-x64"
 WINDOWS_X64_BUILD_EXE = WINDOWS_X64_BUILD_DIR / "OpenPlayer.exe"
 WINDOWS_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64"
@@ -58,7 +56,6 @@ WINDOWS_X64_DLLS = [
     ),
 ]
 
-# --- Windows x64 Debug ---
 WINDOWS_DEBUG_X64_BUILD_DIR = SCRIPT_DIR / "build/windows-debug-x64"
 WINDOWS_DEBUG_X64_BUILD_EXE = WINDOWS_DEBUG_X64_BUILD_DIR / "OpenPlayer.exe"
 WINDOWS_DEBUG_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64_DEBUG"
@@ -76,7 +73,6 @@ WINDOWS_DEBUG_X64_DLLS = [
     ),
 ]
 
-# --- Windows x86 Release ---
 WINDOWS_X86_BUILD_DIR = SCRIPT_DIR / "build/windows-rel-x86"
 WINDOWS_X86_BUILD_EXE = WINDOWS_X86_BUILD_DIR / "OpenPlayer.exe"
 WINDOWS_X86_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x86"
@@ -99,7 +95,6 @@ wdX64ExportZip = Path(f"{WINDOWS_X64_EXPORT_DIR}.zip")
 wdX64DEBUGExportZip = Path(f"{WINDOWS_DEBUG_X64_EXPORT_DIR}.zip")
 wdX86ExportZip = Path(f"{WINDOWS_X86_EXPORT_DIR}.zip")
 
-# LINUX
 if LINUX_EXPORT_DIR.exists():
     shutil.rmtree(LINUX_EXPORT_DIR)
     print("Removed old Linux export")
@@ -113,7 +108,6 @@ if lxDEBUGExportZip.exists():
     lxDEBUGExportZip.unlink()
     print("Removed ol Linux DEBUG export -> zip")
 
-# WINDOWS X64 & X86
 if WINDOWS_X64_EXPORT_DIR.exists():
     shutil.rmtree(WINDOWS_X64_EXPORT_DIR)
     print("Removed old Windows X64 export")
@@ -180,7 +174,6 @@ else:
     print(f"Error -> Windows x86 binary not found at: {WINDOWS_X86_BUILD_EXE.relative_to(SCRIPT_DIR)}")
     sys.exit()
 
-# copy dlls into windows release folders
 for dll in WINDOWS_X64_DLLS:
     print(f"Copying {str(dll)} -> Windows x64")
     shutil.copy(str(dll), str(WINDOWS_X64_EXPORT_DIR))
