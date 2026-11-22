@@ -18,3 +18,9 @@ win_x64_button.addEventListener("click", () => {
 win_x86_button.addEventListener("click", () => {
     window.open(download_links[2], "_blank", "noopener,noreferrer");
 });
+
+var main_project_button = document.getElementById("main-project")
+
+main_project_button.addEventListener("click", () => {
+    window.open("https://github.com/Geararr/OpenPlayer", "_blank", "noopener,noreferrer");
+});

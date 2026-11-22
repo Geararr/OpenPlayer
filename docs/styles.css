@@ -53,9 +53,10 @@ body {
     height: auto;
     margin: 0 auto;
     padding-top: 23px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .op-player-img:hover {
-    transform: translateY(40px);
+    transform: translateY(-8px);
 }
 .op-player-img img {
     display: block;
@@ -93,6 +94,11 @@ body {
     padding: 0;
     cursor: pointer;
     padding: 10px;
+
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.download-buttons .d-button:hover {
+    transform: translateY(-8px);
 }
 .download-buttons .d-button img {
     height: 60px;
