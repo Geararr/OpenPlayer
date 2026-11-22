@@ -21,6 +21,7 @@ WINDOWS_X64_DLLS = [
     "/usr/x86_64-w64-mingw32/bin/libssp-0.dll",
     "/usr/x86_64-w64-mingw32/bin/zlib1.dll",
     "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll",
+    "./build/windows-rel-x64/libglib-2.0-0.dll"
 ]
 WINDOWS_DEBUG_X64_BUILD_EXE = SCRIPT_DIR / "build/windows-debug-x64/OpenPlayer.exe"
 WINDOWS_DEBUG_X64_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64_DEBUG"
@@ -34,6 +35,7 @@ WINDOWS_DEBUG_X64_DLLS = [
     "/usr/x86_64-w64-mingw32/bin/libssp-0.dll",
     "/usr/x86_64-w64-mingw32/bin/zlib1.dll",
     "/usr/x86_64-w64-mingw32/bin/libgcc_s_seh-1.dll",
+    "./build/windows-debug-x64/vcpkg_installed/x64-mingw-dynamic/debug/bin/libglib-2.0-0.dll"
 ]
 
 WINDOWS_X86_BUILD_EXE = SCRIPT_DIR / "build/windows-rel-x86/OpenPlayer.exe"
@@ -48,6 +50,7 @@ WINDOWS_X86_DLLS = [
     "/usr/i686-w64-mingw32/bin/libssp-0.dll",
     "/usr/i686-w64-mingw32/bin/zlib1.dll",
     "/usr/i686-w64-mingw32/bin/libgcc_s_dw2-1.dll",
+    "./build/windows-rel-x86/libglib-2.0-0.dll"
 ]
 
 lxExportZip = Path(f"{LINUX_EXPORT_DIR}.zip")
