@@ -53,6 +53,7 @@ body {
     height: auto;
     margin: 0 auto;
     padding-top: 23px;
+
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .op-player-img:hover {
@@ -62,6 +63,16 @@ body {
     display: block;
     width: 650px;
     height: auto;
+
+    filter:
+        drop-shadow(-3px 0 8px rgba(51, 185, 230, 0.35))
+        drop-shadow(3px 0 8px rgba(4, 240, 144, 0.35));
+    transition: filter 0.3s ease;     
+}
+.op-player-img:hover img {
+    filter:
+        drop-shadow(-4px 0 12px rgba(51, 185, 230, 0.35))
+        drop-shadow(4px 0 12px rgba(4, 240, 144, 0.35));
 }
 
 .description {
@@ -91,18 +102,28 @@ body {
 .download-buttons .d-button {
     background: transparent;
     border: none;
-    padding: 0;
-    cursor: pointer;
     padding: 10px;
+    cursor: pointer;
 
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease;
 }
 .download-buttons .d-button:hover {
     transform: translateY(-8px);
 }
 .download-buttons .d-button img {
+    display: block;
     height: 60px;
     width: 60px;
+
+    filter:
+        drop-shadow(-3px 0 8px rgba(51, 185, 230, 0.35))
+        drop-shadow(3px 0 8px rgba(4, 240, 144, 0.35));
+    transition: filter 0.3s ease;   
+}
+.download-buttons .d-button:hover img {
+    filter:
+        drop-shadow(-4px 0 12px rgba(51, 185, 230, 0.35))
+        drop-shadow(4px 0 12px rgba(4, 240, 144, 0.35));
 }
 
 .credits {
