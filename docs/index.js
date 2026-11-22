@@ -20,7 +20,21 @@ win_x86_button.addEventListener("click", () => {
 });
 
 var demo_video_button = document.getElementById("demo-video")
+var demo_vid_clicked = false;
 
-// main_project_button.addEventListener("click", () => {
-    
-// });
+demo_video_button.addEventListener("click", () => {
+    if (!demo_vid_clicked) {
+        demo_video_button.innerHTML = `
+        <iframe 
+            width="771" 
+            height="434" src="https://www.youtube.com/embed/wr992kEoP2I" 
+            title="OpenPlayer v5.0.0 Demo" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            referrerpolicy="strict-origin-when-cross-origin" 
+            allowfullscreen>
+        </iframe>
+        `
+        demo_vid_clicked = true;
+    }
+});
