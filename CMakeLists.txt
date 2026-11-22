@@ -58,6 +58,20 @@ add_executable(OpenPlayer
         src/miniaudio_impl.cpp
 )
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+if(ipo_supported)
+    set_property(TARGET OpenPlayer PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+endif()
+
+target_compile_options(OpenPlayer PRIVATE
+    $<$<CONFIG:Release>:-O3 -DNDEBUG>
+)
+
+target_link_options(OpenPlayer PRIVATE
+    $<$<CONFIG:Release>:-s>
+)
+
 if(CMAKE_CROSSCOMPILING OR CMAKE_CXX_COMPILER MATCHES "mingw" OR WIN32)
     enable_language(RC)
     target_sources(OpenPlayer PRIVATE assets/win_icon.rc)
