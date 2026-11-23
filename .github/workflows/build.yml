@@ -51,11 +51,11 @@ jobs:
 
       - name: Set VCPKG_ROOT (Windows)
         if: runner.os == 'Windows'
-        run: echo "Add-Content $env:GITHUB_ENV \"VCPKG_ROOT=$env:GITHUB_WORKSPACE\\vcpkg\""
-        shell: cmd
+        run: echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE/vcpkg" >> $env:GITHUB_ENV
+        shell: pwsh
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build Project
         run: cmake --build build --config Release
