@@ -64,6 +64,7 @@ jobs:
       - name: Build Project
         env:
           MAKEFLAGS: ""
+          CARGO_BUILD_JOBS: "1"
         run: cmake --build build --config Release
 
       - name: Run Packaging Script
