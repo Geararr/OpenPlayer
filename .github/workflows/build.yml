@@ -26,7 +26,8 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v1
         with:
-          vcpkgJsonPath: 'vcpkg.json'
+          vcpkgArguments: '${{ github.workspace }}/vcpkg.json'
+          vcpkgDirectory: '${{runner.workspace }}/vcpkg'
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
