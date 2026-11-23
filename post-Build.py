@@ -5,8 +5,11 @@ import sys
 SCRIPT_DIR = Path(__file__).resolve().parent
 
 LINUX_BUILD_EXE = SCRIPT_DIR / "build/linux-rel/OpenPlayer"
+LINUX_SLINT_SO = SCRIPT_DIR / "build/linux-rel/_deps/slint-build/libslint_cpp.so"
 LINUX_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"
+
 LINUX_DEBUG_BUILD_EXE = SCRIPT_DIR / "build/linux-debug/OpenPlayer"
+LINUX_DEBUG_SLINT_SO = SCRIPT_DIR / "build/linux-debug/_deps/slint-build/libslint_cpp.so"
 LINUX_DEBUG_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"
 
 import subprocess
@@ -103,10 +106,10 @@ if lxExportZip.exists():
     print("Removed old Linux export -> zip")
 if LINUX_DEBUG_EXPORT_DIR.exists():
     shutil.rmtree(LINUX_DEBUG_EXPORT_DIR)
-    print("Removed of Linux DEBUG export")
+    print("Removed old Linux DEBUG export")
 if lxDEBUGExportZip.exists():
     lxDEBUGExportZip.unlink()
-    print("Removed ol Linux DEBUG export -> zip")
+    print("Removed old Linux DEBUG export -> zip")
 
 if WINDOWS_X64_EXPORT_DIR.exists():
     shutil.rmtree(WINDOWS_X64_EXPORT_DIR)
@@ -138,6 +141,15 @@ if LINUX_BUILD_EXE.exists():
 else:
     print(f"Error -> Linux binary not found at: {LINUX_BUILD_EXE.relative_to(SCRIPT_DIR)}")
     sys.exit()
+
+if LINUX_SLINT_SO.exists():
+    destination = LINUX_EXPORT_DIR / "libslint_cpp.so"
+    shutil.copy(str(LINUX_SLINT_SO), str(destination))
+    print(f"Moved Linux shared library to -> {destination.relative_to(SCRIPT_DIR)}")
+else:
+    print(f"Error -> Linux shared library not found at: {LINUX_SLINT_SO.relative_to(SCRIPT_DIR)}")
+    sys.exit()
+
 if LINUX_DEBUG_BUILD_EXE.exists():
     destination = LINUX_DEBUG_EXPORT_DIR / "OpenPlayer"
     shutil.copy(str(LINUX_DEBUG_BUILD_EXE), str(destination))
@@ -146,6 +158,13 @@ else:
     print(f"Error -> Linux DEBUG binary not found at: {LINUX_DEBUG_BUILD_EXE.relative_to(SCRIPT_DIR)}")
     sys.exit()
 
+if LINUX_DEBUG_SLINT_SO.exists():
+    destination = LINUX_DEBUG_EXPORT_DIR / "libslint_cpp.so"
+    shutil.copy(str(LINUX_DEBUG_SLINT_SO), str(destination))
+    print(f"Moved Linux DEBUG shared library to -> {destination.relative_to(SCRIPT_DIR)}")
+else:
+    print(f"Error -> Linux DEBUG shared library not found at: {LINUX_DEBUG_SLINT_SO.relative_to(SCRIPT_DIR)}")
+    sys.exit()
 
 WINDOWS_X64_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 WINDOWS_DEBUG_X64_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
