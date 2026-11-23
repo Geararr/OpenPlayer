@@ -42,11 +42,17 @@ jobs:
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         run: .\vcpkg\bootstrap-vcpkg.bat
-        shell: bash
+        shell: cmd
 
-      - name: Set VCPKG_ROOT
+      - name: Set VCPKG_ROOT (Linux)
+        if: runner.os == 'Linux'
         run: echo "VCPKG_ROOT=$PWD/vcpkg" >> $GITHUB_ENV
         shell: bash
+
+      - name: Set VCPKG_ROOT (Windows)
+        if: runner.os == 'Windows'
+        run: echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_ENV
+        shell: cmd
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake
