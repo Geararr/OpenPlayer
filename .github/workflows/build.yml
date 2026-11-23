@@ -51,7 +51,7 @@ jobs:
 
       - name: Set VCPKG_ROOT (Windows)
         if: runner.os == 'Windows'
-        run: echo "VCPKG_ROOT=$env:GITHUB_WORKSPACE\vcpkg" >> $env:GITHUB_ENV
+        run: echo "Add-Content $env:GITHUB_ENV \"VCPKG_ROOT=$env:GITHUB_WORKSPACE\\vcpkg\""
         shell: cmd
 
       - name: Configure CMake
