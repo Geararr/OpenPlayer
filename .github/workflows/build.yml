@@ -14,7 +14,11 @@ jobs:
           - os: ubuntu-latest
             name: Linux
           - os: windows-latest
-            name: Windows
+            name: Windows-x64
+            arch: x64
+          - os: windows-latest
+            name: Windows-x86
+            arch: Win32
 
     runs-on: ${{ matrix.os }}
 
@@ -55,10 +59,10 @@ jobs:
         shell: pwsh
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake"
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" ${{ matrix.arch && format('-A {0}', matrix.arch) || '' }}
 
       - name: Build Project
-        run: cmake --build build --config Release
+        run: MAKEFLAGS="" cmake --build build --config Release
 
       - name: Run Packaging Script
         run: python post-Build.py
@@ -84,5 +88,6 @@ jobs:
         with:
           files: |
             OpenPlayer-Linux/*
-            OpenPlayer-Windows/*
+            OpenPlayer-Windows-x64/*
+            OpenPlayer-Windows-x86/*
           generate_release_notes: true
