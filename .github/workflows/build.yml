@@ -23,11 +23,29 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
       - name: Setup vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "VCPKG_ROOT=$PWD/vckg" >> $GITHUB_ENV
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git
+        shell: bash
+
+      - name: Bootstrap vcpkg (Linux)
+        if: runner.os == 'Linux'
+        run: ./vcpkg/bootstrap-vcpkg.sh
+        shell: bash
+
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: .\vcpkg\bootstrap-vcpkg.bat
+        shell: bash
+
+      - name: Set VCPKG_ROOT
+        run: echo "VCPKG_ROOT=$PWD/vcpkg" >> $GITHUB_ENV
         shell: bash
 
       - name: Configure CMake
