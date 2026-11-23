@@ -62,7 +62,9 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" ${{ matrix.arch && format('-A {0}', matrix.arch) || '' }}
 
       - name: Build Project
-        run: MAKEFLAGS="" cmake --build build --config Release
+        env:
+          MAKEFLAGS: ""
+        run: cmake --build build --config Release
 
       - name: Run Packaging Script
         run: python post-Build.py
