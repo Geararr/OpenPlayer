@@ -36,10 +36,18 @@
 #include <climits>
 #endif
 
+enum class DataType {
+    Cache,
+    Config,
+    Music
+};
+
 namespace SoundData {
     inline CacheManager* cacheManager_;
+    inline ConfigManager* configManager_;
 
     void setCacheManager(CacheManager* cacheManager);
+    void setConfigManager(ConfigManager* configManager);
 
     class LruImageCache {
     private:
@@ -63,7 +71,8 @@ namespace SoundData {
 
     std::vector<uint8_t> GetAudioCoverBytes(const std::string& assetKey, const std::filesystem::path& filePath);
     slint::Image GetImageFromBytes(const std::string& assetKey, int maxDimension, const std::filesystem::path& filePath);
-    std::filesystem::path getExecDir();
+    std::filesystem::path getDataDir(DataType type);
 }
 
-slint::Color colorFromHex(std::string_view hex);
+slint::SharedString colorToHex(slint::Color color);
+slint::Color hexToColor(std::string_view hex);

@@ -9,6 +9,20 @@ export global Theme {
     out property <color> button-selected: Palette.control-background.darker(0.65);
     out property <color> button-hover: Palette.control-background.brighter(0.65);
 }
+export global Default-Theme {
+    in-out property <color> background-main: rgb(32, 32, 43);
+    in-out property <color> background-panel: rgba(17, 17, 27, 0.8);
+    in-out property <color> border-sublte: Palette.border;
+    in-out property <color> text-primary: rgb(215, 215, 247);
+    in-out property <color> button-normal: Palette.control-background;
+    out property <color> button-selected: Palette.control-background.darker(0.65);
+    out property <color> button-hover: Palette.control-background.brighter(0.65);
+}
+
+export global ColorUtils {
+    pure callback to-hex(color) -> string;
+    pure callback from-hex(string) -> color;
+}
 
 export struct PendingSong {
     image: image,
@@ -349,30 +363,141 @@ export component SoundsInterface inherits Rectangle {
     }
 }
 
-export component ConfigBlock inherits Rectangle {
+export component ColorWheel inherits Rectangle {
+    in-out property <angle> hue: 0deg;
+    in-out property <float> saturation: 1.0;
+    in-out property <float> value: 1.0;
+    in property <color> external-color;
+    out property <color> selected-color: Colors.hsv(root.hue / 1deg, root.saturation, root.value);
+
+    callback set-color(color);
+
+    changed external-color => {
+        root.hue = root.external-color.to-hsv().hue * 1deg;
+        root.saturation = root.external-color.to-hsv().saturation;
+        root.value = root.external-color.to-hsv().value;
+    }
+
+    width: 100px;
+    height: 100px;
+
+    wheel := Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: self.width / 2;
+        background: @conic-gradient(
+            #ff0000 0deg,
+            #ffff00 60deg,
+            #00ff00 120deg,
+            #00ffff 180deg,
+            #0000ff 240deg,
+            #ff00ff 300deg,
+            #ff0000 360deg
+        );
+
+        Rectangle {
+            border-radius: parent.border-radius;
+            background: @radial-gradient(circle, #ffffff 0%, #ffffff00 100%);
+        }
+
+        Rectangle {
+            border-radius: parent.border-radius;
+            background: #000000;
+            opacity: 1.0 - root.value;
+        }
+    }
+
+    Rectangle {
+        property <length> radius: (root.width / 2) * root.saturation;
+        x: (root.width / 2) + self.radius * sin(root.hue) - (self.width / 2);
+        y: (root.height / 2) - self.radius * cos(root.hue) - (self.height / 2);
+        width: 12px;
+        height: 12px;
+        border-radius: 7px;
+        border-width: 2px;
+        border-color: #ffffff;
+        background: root.selected-color;
+    }
+
+    touch := TouchArea {
+        function update-color() {
+            let dx = (self.mouse-x - root.width / 2) / 1px;
+            let dy = (self.mouse-y - root.height / 2) / 1px;
+            let r = (root.width / 2) / 1px;
+
+            let raw-angle = atan2(dx, -dy);
+            root.hue = raw-angle < 0deg ? raw-angle + 360deg : raw-angle;
+
+            root.saturation = clamp(sqrt(dx * dx + dy * dy) / r, 0.0, 1.0);
+        }
+
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.update-color();
+            }
+            else if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                self.update-color();
+                root.set-color(root.selected-color);
+            }
+        }
+        moved => {
+            if (self.pressed) {
+                self.update-color();
+            }
+        }
+    }
+}
+
+export component ConfigColorBlock inherits Rectangle {
     in property <string> property-name: "Property";
+    in property <bool> color-wheel: true;
     in-out property <string> property-value: "Value";
     callback value-edited(string);
 
-    height: 75px;
+    height: color-wheel ? 220px : 75px;
 
     border-width: 1px;
     border-radius: 4px;
     background: Theme.button-normal;
 
     VerticalBox {
+    cross-axis-alignment: center;
         Text {
             text: property-name;
             horizontal-alignment: center;
             vertical-alignment: center;
             color: Theme.text-primary;
         }
+
         LineEdit {
             placeholder-text: property-value;
             horizontal-alignment: center;
             accepted(new-text) => {
                 root.property-value = new-text;
                 root.value-edited(new-text);
+                self.clear-focus();
+            }
+        }
+        if color-wheel : VerticalBox {
+            spacing: 6px;
+            wheel := ColorWheel {
+                external-color: ColorUtils.from-hex(root.property-value);
+                value <=> brightness-slider.value;
+
+                set-color(color) => {
+                    root.property-value = ColorUtils.to-hex(color);
+                    root.value-edited(root.property-value);
+                }
+            }
+
+            brightness-slider := Slider {
+                minimum: 0.0;
+                maximum: 1.0;
+                value: 1.0;
+                changed(val) => {
+                    root.property-value = ColorUtils.to-hex(wheel.selected-color);
+                    root.value-edited(root.property-value);
+                }
             }
         }
     }
@@ -380,11 +505,15 @@ export component ConfigBlock inherits Rectangle {
 
 export struct ConfigProperty {
     name: string,
-    value: string
+    value: string,
+    color-wheel: bool
 }
 export component ConfigInterface inherits Rectangle {
     in-out property <[ConfigProperty]> config-properties;
     callback config-changed(string, string);
+    callback reset-theme();
+    callback save-theme();
+    callback reload();
 
     min-width: 0px;
     max-width: 10000px;
@@ -393,19 +522,57 @@ export component ConfigInterface inherits Rectangle {
     border-width: 1px;
     border-color: Theme.border-sublte;
 
-    ScrollView {
-        GridBox {
-            spacing: 10px;
+    VerticalLayout {
+        padding: 5px;
+        spacing: 8px;
 
-            for prop[index] in config-properties : ConfigBlock {
-                row: Math.floor(index / 3);
-                col: Math.mod(index, 3);
+        HorizontalLayout {
+            spacing: 5px;
 
-                property-name: prop.name;
-                property-value: prop.value;
+            CustomButton {
+                text: "Reset";
 
-                value-edited(new-value) => {
-                    root.config-changed(prop.name, new-value);
+                border-radius: 6px;
+
+                clicked => {
+                    root.reset-theme();
+                }
+            }
+            CustomButton {
+                text: "Reload";
+
+                border-radius: 6px;
+
+                clicked => {
+                    root.reload();
+                }
+            }
+            CustomButton {
+                text: "Save";
+
+                border-radius: 6px;
+
+                clicked => {
+                    root.save-theme();
+                }
+            }
+        }
+
+        ScrollView {
+            GridBox {
+                spacing: 10px;
+
+                for prop[index] in config-properties : ConfigColorBlock {
+                    row: Math.floor(index / 3);
+                    col: Math.mod(index, 3);
+
+                    property-name: prop.name;
+                    property-value: prop.value;
+                    color-wheel: prop.color-wheel;
+
+                    value-edited(new-value) => {
+                        root.config-changed(prop.name, new-value);
+                    }
                 }
             }
         }
@@ -441,6 +608,9 @@ export component ContentArea inherits Rectangle {
     callback volume-changed(float);
 
     callback config-changed(string, string);
+    callback reset-theme();
+    callback save-theme();
+    callback reload();
 
     if root.current-tab == 0 : SoundsInterface {
         width: 100%; height: 100%;
@@ -479,6 +649,15 @@ export component ContentArea inherits Rectangle {
 
         config-changed(name, value) => {
             config-changed(name, value); // check what changed on ui and set the change if valid
+        }
+        reset-theme => {
+            root.reset-theme();
+        }
+        save-theme => {
+            root.save-theme();
+        }
+        reload => {
+            root.reload();
         }
     }
 }

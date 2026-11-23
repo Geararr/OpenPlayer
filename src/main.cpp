@@ -56,17 +56,18 @@ int main(int argc, char* argv[]) {
   vips_concurrency_set(1);
 
   ConfigManager configManager;
-  const std::filesystem::path configPath = SoundData::getExecDir() / "config/config.json";
+  const std::filesystem::path configPath = SoundData::getDataDir(DataType::Config) / "config/config.json";
   configManager.setConfigPath(configPath);
 
   // STARTUP
 
   CacheManager cacheManager;
-  const std::filesystem::path cachePath = SoundData::getExecDir() / "cache/cache.json";
+  const std::filesystem::path cachePath = SoundData::getDataDir(DataType::Cache) / "cache/cache.json";
   cacheManager.setCachePath(cachePath);
   cacheManager.loadCache();
 
   SoundData::setCacheManager(&cacheManager);
+  SoundData::setConfigManager(&configManager);
 
   EventManager eventManager;
 

@@ -71,13 +71,26 @@ bool SoundManager::playlistIsValid(const std::filesystem::path& playlist) {
 
 std::vector<std::filesystem::path> SoundManager::getPlaylists() {
     std::vector<std::filesystem::path> playlists;
-    const std::filesystem::path playlistDir = SoundData::getExecDir() / "music";
-
+    const std::filesystem::path playlistDir = SoundData::getDataDir(DataType::Music);
     std::error_code ec;
+
+    if (std::filesystem::create_directory(playlistDir, ec)) {
+        return playlists;
+    }
+
+    if (ec) {
+        std::cerr << "Error -> Failed to create directory " << playlistDir <<  " (" << ec.message() << ")\n";
+        return playlists;
+    }
+
     for (const auto& entry : std::filesystem::directory_iterator(playlistDir, ec)) {
         if (playlistIsValid(entry.path())) {
             playlists.push_back(entry.path());
         }
+    }
+
+    if (ec) {
+        std::cerr << "Error -> Failed to read directory " << playlistDir << " (" << ec.message() << ")\n";
     }
 
     return playlists;

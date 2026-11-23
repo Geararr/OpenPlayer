@@ -14,6 +14,9 @@ using AudioCoverBytes = std::vector<uint8_t>;
 void SoundData::setCacheManager(CacheManager *cacheManager) {
     cacheManager_ = cacheManager;
 }
+void SoundData::setConfigManager(ConfigManager *configManager) {
+    configManager_ = configManager;
+}
 
 bool SoundData::LruImageCache::get(const std::string& key, slint::Image& outImage) {
     const auto it = map_.find(key);
@@ -173,7 +176,7 @@ slint::Image SoundData::GetImageFromBytes(const std::string& assetKey, const int
         return cachedImg;
     }
 
-    std::filesystem::path thumbDir = getExecDir() / "cache";
+    std::filesystem::path thumbDir = getDataDir(DataType::Cache) / "cache";
 
     json entry = cacheManager_->getEntry(assetKey);
     if (!entry.is_object()) {
@@ -256,19 +259,41 @@ slint::Image SoundData::GetImageFromBytes(const std::string& assetKey, const int
     }
 }
 
-std::filesystem::path SoundData::getExecDir() {
+std::filesystem::path SoundData::getDataDir(const DataType type) { // 0 = config, 1 = cache
 #ifdef _WIN32
     wchar_t path[MAX_PATH] = { 0 };
     GetModuleFileNameW(nullptr, path, MAX_PATH);
     return std::filesystem::path(path).parent_path();
 #else
-    char result[PATH_MAX];
-    const ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    return std::filesystem::path(std::string(result, (count > 0) ? count : 0)).parent_path();
+    const char* homeDir = std::getenv("HOME");
+    if (homeDir) {
+        if (type == DataType::Config) { // config
+            std::filesystem::path configPath = std::filesystem::path(homeDir) / ".config" / "OpenPlayer_Config";
+            std::filesystem::create_directories(configPath);
+            return configPath;
+        }
+        else if (type == DataType::Cache) { // cache
+            std::filesystem::path cachePath = std::filesystem::path(homeDir) / ".cache" / "OpenPlayer_Cache";
+            std::filesystem::create_directories(cachePath);
+            return cachePath;
+        }
+        else if (type == DataType::Music) { // music
+            return configManager_->getConfig().value("music-directory", "");
+        }
+    }
+
+    return std::filesystem::current_path();
 #endif
 }
 
-slint::Color colorFromHex(std::string_view hex) {
+// ColorUtils
+slint::SharedString colorToHex(const slint::Color color) {
+    char hex[8];
+    std::snprintf(hex, sizeof(hex), "#%02x%02x%02x", color.red(), color.green(), color.blue());
+    return {hex};
+}
+
+slint::Color hexToColor(std::string_view hex) {
     if (!hex.empty() && hex.front() == '#') {
         hex.remove_prefix(1);
     }

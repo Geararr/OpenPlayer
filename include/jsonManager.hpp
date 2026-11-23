@@ -19,11 +19,15 @@ class ConfigManager {
         ~ConfigManager();
         void setConfigPath(std::filesystem::path path);
 
+        void checkConfig();
+
         void loadConfig(); // load config into local_data from current config_path
         void writeConfig(json data);
         void saveConfig();
         json& getConfig();
         json copyConfig();
+
+        void resetConfig();
 };
 
 class CacheManager {

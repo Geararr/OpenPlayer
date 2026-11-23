@@ -3,10 +3,64 @@
 
 #include <slint/slint.h>
 #include <iostream>
+#include <cstdio>
 
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <oneapi/tbb/profiling.h>
+
+void UiManager::applyTheme() {
+    const auto& config = this->configManager->getConfig();
+    const auto& theme = ui->global<Theme>();
+
+    theme.set_background_main(hexToColor(config.value("background-main", "#20202b")));
+    theme.set_background_panel(hexToColor(config.value("background-panel", "#11111bcc")));
+    theme.set_border_sublte(hexToColor(config.value("border-color", "#9ab8ff")));
+    theme.set_text_primary(hexToColor(config.value("text-primary", "#d7d7f7")));
+
+    const auto propertiesModel = ui->get_config_properties();
+
+    for (size_t i = 0; i < propertiesModel->row_count(); ++i) {
+        if (auto row = propertiesModel->row_data(i)) {
+            std::string key(row->name);
+            if (config.contains(key)) {
+                std::string val_str = config[key].is_string()
+                    ? config[key].get<std::string>()
+                    : config[key].dump();
+                row->value = slint::SharedString(val_str);
+                propertiesModel->set_row_data(i, *row);
+            }
+        }
+    }
+}
+
+void UiManager::reloadConfig() {
+    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
+    const auto& config = this->configManager->getConfig();
+
+    for (const auto& [key, val] : config.items()) {
+        std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
+
+        properties_model->push_back(ConfigProperty{
+            .name = slint::SharedString(key),
+            .value = slint::SharedString(val_str),
+            .color_wheel = (val_str.starts_with('#')), // color or normal
+        });
+    }
+
+    ui->set_config_properties(properties_model);
+
+    applyTheme();
+}
+void UiManager::reloadPlaylists(SoundManager* soundManager) {
+    const auto playlist_model = std::make_shared<slint::VectorModel<slint::SharedString>>();
+    for (const auto& playlist : soundManager->getPlaylists()) {
+        playlist_model->push_back(static_cast<slint::SharedString>(playlist.filename().string()));
+    }
+
+    ui->set_playlists(playlist_model);
+}
 
 UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager) : ui(OpenPlayerUI::create()) {
 
@@ -14,25 +68,7 @@ UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager) :
     this->configManager = configManager;
     this->configManager->loadConfig();
 
-    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
-    for (const auto& [key, val] : this->configManager->getConfig().items()) {
-        std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
-
-        properties_model->push_back(ConfigProperty{
-            .name = slint::SharedString(key),
-            .value = slint::SharedString(val_str)
-        });
-    }
-
-    ui->set_config_properties(properties_model);
-    const auto& theme = ui->global<Theme>();
-
-    json config = this->configManager->getConfig();
-
-    theme.set_background_main(colorFromHex(config.value("background-main", "#20202b")));
-    theme.set_background_panel(colorFromHex(config.value("background-panel", "#11111bcc")));
-    theme.set_border_sublte(colorFromHex(config.value("border-color", "#9ab8ff")));
-    theme.set_text_primary(colorFromHex(config.value("text-primary", "#d7d7f7")));
+    reloadConfig();
 
     // SONGS SETUP
     ui->set_current_sound("No song selected...");
@@ -41,12 +77,8 @@ UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager) :
 
     ui->set_is_playing(false);
 
-    const auto playlist_model = std::make_shared<slint::VectorModel<slint::SharedString>>();
-    for (const auto& playlist : soundManager->getPlaylists()) {
-        playlist_model->push_back(static_cast<slint::SharedString>(playlist.filename().string()));
-    }
+    reloadPlaylists(soundManager);
 
-    ui->set_playlists(playlist_model);
 }
 
 void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManager) {
@@ -99,32 +131,36 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
 
         json configCopy = this->configManager->copyConfig();
         configCopy[std::string(name)] = std::string(value);
-
         this->configManager->writeConfig(configCopy);
+
+        const auto propertiesModel = ui->get_config_properties();
+
+        applyTheme();
+
+        for (size_t i = 0; i < propertiesModel->row_count(); ++i) {
+            if (auto row = propertiesModel->row_data(i); row && row->name == name) {
+                row->value = value;
+                propertiesModel->set_row_data(i, *row);
+                break;
+            }
+        }
+    });
+    ui->on_reset_theme([this]() {
+        this->configManager->resetConfig();
+
+        const auto propertiesModel = ui->get_config_properties();
+
         reloadConfig();
     });
-}
+    ui->on_save_theme([this]() {
+        this->configManager->saveConfig();
+    });
+    ui->on_reload([this, soundManager, eventManager]() {
+        reloadPlaylists(soundManager);
+    });
 
-void UiManager::reloadConfig() {
-    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
-    const auto& config = this->configManager->getConfig();
-
-    for (const auto& [key, val] : config.items()) {
-        std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
-
-        properties_model->push_back(ConfigProperty{
-            .name = slint::SharedString(key),
-            .value = slint::SharedString(val_str)
-        });
-    }
-
-    ui->set_config_properties(properties_model);
-
-    const auto& theme = ui->global<Theme>();
-    theme.set_background_main(colorFromHex(config.value("background-main", "#20202b")));
-    theme.set_background_panel(colorFromHex(config.value("background-panel", "#11111bcc")));
-    theme.set_border_sublte(colorFromHex(config.value("border-color", "#9ab8ff")));
-    theme.set_text_primary(colorFromHex(config.value("text-primary", "#d7d7f7")));
+    // ColorUtils
+    ui->global<ColorUtils>().on_to_hex(colorToHex);
 }
 
 slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {

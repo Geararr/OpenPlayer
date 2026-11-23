@@ -7,6 +7,7 @@
     {
       "name": "libvips",
       "features": ["cplusplus", "jpeg", "png", "webp"]
-    }
+    },
+    "tbb"
   ]
 }

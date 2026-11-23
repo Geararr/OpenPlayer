@@ -1,6 +1,6 @@
 import "../../assets/fonts/baseFont.ttf";
-import { SoundsInterface, LeftInterface, ContentArea, PendingSong, Theme, ConfigProperty } from "buttonThemes.slint";
-export { Theme }
+import { SoundsInterface, LeftInterface, ContentArea, PendingSong, Theme, Default-Theme, ConfigProperty, ColorUtils } from "buttonThemes.slint";
+export { Theme, ColorUtils, Default-Theme }
 
 export component OpenPlayerUI inherits Window {
     default-font-family: "0xProto Nerd Font";
@@ -22,6 +22,8 @@ export component OpenPlayerUI inherits Window {
 
     in-out property <[ConfigProperty]> config-properties;
 
+    in property <bool> valid-music-dir: false;
+
     // set sizes
     min-width: 750px;
     min-height: 550px;
@@ -41,6 +43,9 @@ export component OpenPlayerUI inherits Window {
     callback toggle-music();
     callback volume-changed(float);
     callback config-changed(string, string);
+    callback reset-theme();
+    callback save-theme();
+    callback reload();
 
     HorizontalLayout {
         spacing: 10px;
@@ -75,6 +80,15 @@ export component OpenPlayerUI inherits Window {
 
             config-changed(name, value) => {
                 config-changed(name, value);
+            }
+            reset-theme => {
+                root.reset-theme();
+            }
+            save-theme => {
+                root.save-theme();
+            }
+            reload => {
+                root.reload();
             }
 
             previous-song => { root.previous-song(); }

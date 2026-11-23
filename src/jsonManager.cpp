@@ -12,6 +12,32 @@ void ConfigManager::setConfigPath(std::filesystem::path path) {
     std::cout << config_path << " -> was set\n";
 }
 
+void ConfigManager::checkConfig() {
+    json basicConfig = {
+        {"background-main", "#20202b"},
+        {"background-panel", "#11111bcc"},
+        {"border-color", "#9ab8ff"},
+        {"text-primary", "#d7d7f7"},
+        {"music-directory", ""}
+    };
+
+    std::vector<std::string> keysToRemove;
+    for (const auto& [key, value] : local_data.items()) { // check for extra data, like maybe updates or smth
+        if (!basicConfig.contains(key)) {
+            keysToRemove.push_back(key);
+        }
+    }
+    for (const auto& key : keysToRemove) {
+        local_data.erase(key);
+    }
+
+    for (const auto& [key, value] : basicConfig.items()) { // check for missing data, same reason ^^^
+        if (!local_data.contains(key)) {
+            local_data[key] = value;
+        }
+    }
+}
+
 void ConfigManager::loadConfig() {
     if (std::filesystem::exists(config_path)) {
         std::ifstream config_content(config_path);
@@ -22,12 +48,14 @@ void ConfigManager::loadConfig() {
                 {"background-main", "#20202b"},
                 {"background-panel", "#11111bcc"},
                 {"border-color", "#9ab8ff"},
-                {"text-primary", "#d7d7f7"}
+                {"text-primary", "#d7d7f7"},
+                {"music-directory", ""}
             });
             saveConfig();
         }
         else {
             local_data = json::parse(config_content);
+            checkConfig();
             std::cout << local_data << " -> was loaded\n";
         }
     }
@@ -37,7 +65,8 @@ void ConfigManager::loadConfig() {
             {"background-main", "#20202b"},
             {"background-panel", "#11111bcc"},
             {"border-color", "#9ab8ff"},
-            {"text-primary", "#d7d7f7"}
+            {"text-primary", "#d7d7f7"},
+            {"music-directory", ""}
         });
         saveConfig(); // create dir and load basic data
     }
@@ -59,6 +88,15 @@ json& ConfigManager::getConfig() {
 }
 json ConfigManager::copyConfig() {
     return local_data;
+}
+
+void ConfigManager::resetConfig() {
+    writeConfig({
+        {"background-main", "#20202b"},
+        {"background-panel", "#11111bcc"},
+        {"border-color", "#9ab8ff"},
+        {"text-primary", "#d7d7f7"}
+    });
 }
 
 ConfigManager::~ConfigManager() {
