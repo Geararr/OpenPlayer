@@ -19,37 +19,55 @@ void UiManager::applyTheme() {
     theme.set_border_sublte(hexToColor(config.value("border-color", "#9ab8ff")));
     theme.set_text_primary(hexToColor(config.value("text-primary", "#d7d7f7")));
 
-    const auto propertiesModel = ui->get_config_properties();
-
-    for (size_t i = 0; i < propertiesModel->row_count(); ++i) {
-        if (auto row = propertiesModel->row_data(i)) {
-            std::string key(row->name);
-            if (config.contains(key)) {
-                std::string val_str = config[key].is_string()
-                    ? config[key].get<std::string>()
-                    : config[key].dump();
-                row->value = slint::SharedString(val_str);
-                propertiesModel->set_row_data(i, *row);
-            }
-        }
-    }
+    // const auto propertiesModel = ui->get_config_properties();
+    //
+    // std::vector<ConfigProperty> sortedProperties;
+    // sortedProperties.reserve(propertiesModel->row_count());
+    //
+    // for (size_t i = 0; i < propertiesModel->row_count(); ++i) {
+    //     if (auto row = propertiesModel->row_data(i)) {
+    //         std::string key(row->name);
+    //         if (config.contains(key)) {
+    //             std::string val_str = config[key].is_string()
+    //                 ? config[key].get<std::string>()
+    //                 : config[key].dump();
+    //             row->value = slint::SharedString(val_str);
+    //         }
+    //         sortedProperties.push_back(*row);
+    //     }
+    // }
+    //
+    // std::ranges::stable_partition(sortedProperties, [](const ConfigProperty& property) {
+    //     return property.color_wheel;
+    // });
+    //
+    // ui->set_config_properties(
+    //     std::make_shared<slint::VectorModel<ConfigProperty>>(std::move(sortedProperties))
+    // );
 }
 
 void UiManager::reloadConfig() {
-    const auto properties_model = std::make_shared<slint::VectorModel<ConfigProperty>>();
     const auto& config = this->configManager->getConfig();
+    std::vector<ConfigProperty> properties;
+    properties.reserve(config.size());
 
     for (const auto& [key, val] : config.items()) {
         std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
 
-        properties_model->push_back(ConfigProperty{
+        properties.push_back(ConfigProperty{
             .name = slint::SharedString(key),
             .value = slint::SharedString(val_str),
-            .color_wheel = (val_str.starts_with('#')), // color or normal
+            .color_wheel = val_str.starts_with('#')
         });
     }
 
-    ui->set_config_properties(properties_model);
+    std::ranges::stable_partition(properties, [](const ConfigProperty& property) {
+        return property.color_wheel;
+    });
+
+    ui->set_config_properties(
+        std::make_shared<slint::VectorModel<ConfigProperty>>(std::move(properties))
+    );
 
     applyTheme();
 }

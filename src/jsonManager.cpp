@@ -95,7 +95,8 @@ void ConfigManager::resetConfig() {
         {"background-main", "#20202b"},
         {"background-panel", "#11111bcc"},
         {"border-color", "#9ab8ff"},
-        {"text-primary", "#d7d7f7"}
+        {"text-primary", "#d7d7f7"},
+        {"music-directory", getConfig().value("music-directory", "")}
     });
 }
 
