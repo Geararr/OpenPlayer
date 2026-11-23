@@ -43,3 +43,20 @@ jobs:
           name: OpenPlayer-${{ matrix.name }}
           path: |
             EXPORT/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            OpenPlayer-Linux/*
+            OpenPlayer-Windows/*
+          generate_release_notes: true
