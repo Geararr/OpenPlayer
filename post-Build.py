@@ -1,18 +1,9 @@
 from pathlib import Path
 import shutil
 import sys
+import subprocess
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-
-LINUX_BUILD_EXE = SCRIPT_DIR / "build/linux-rel/OpenPlayer"
-LINUX_SLINT_SO = SCRIPT_DIR / "build/linux-rel/_deps/slint-build/libslint_cpp.so"
-LINUX_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"
-
-LINUX_DEBUG_BUILD_EXE = SCRIPT_DIR / "build/linux-debug/OpenPlayer"
-LINUX_DEBUG_SLINT_SO = SCRIPT_DIR / "build/linux-debug/_deps/slint-build/libslint_cpp.so"
-LINUX_DEBUG_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"
-
-import subprocess
 
 def get_required_dlls(entry_binaries: list[Path], search_dirs: list[Path], objdump: str) -> list[Path]:
     available_dlls: dict[str, Path] = {}
@@ -31,17 +22,99 @@ def get_required_dlls(entry_binaries: list[Path], search_dirs: list[Path], objdu
             continue
         visited.add(binary)
 
-        out = subprocess.check_output([objdump, "-p", str(binary)], text=True, stderr=subprocess.DEVNULL)
-        for line in out.splitlines():
-            line = line.strip()
-            if line.startswith("DLL Name:"):
-                dll_name = line.split(":", 1)[1].strip().lower()
-                if dll_name in available_dlls and dll_name not in resolved:
-                    dll_path = available_dlls[dll_name]
-                    resolved[dll_name] = dll_path
-                    queue.append(dll_path)
+        try:
+            out = subprocess.check_output([objdump, "-p", str(binary)], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                line = line.strip()
+                if line.startswith("DLL Name:"):
+                    dll_name = line.split(":", 1)[1].strip().lower()
+                    if dll_name in available_dlls and dll_name not in resolved:
+                        dll_path = available_dlls[dll_name]
+                        resolved[dll_name] = dll_path
+                        queue.append(dll_path)
+        except Exception:
+            pass
 
     return list(resolved.values())
+
+def get_required_sos(entry_binaries: list[Path], search_dirs: list[Path], objdump: str) -> list[Path]:
+    available_sos: dict[str, Path] = {}
+    for folder in reversed(search_dirs):
+        if folder.exists():
+            for so in folder.glob("*.so*"):
+                available_sos[so.name.lower()] = so
+                base_name = so.name.split('.so')[0] + '.so'
+                available_sos[base_name.lower()] = so
+
+    resolved: dict[str, Path] = {}
+    queue = list(entry_binaries)
+    visited = set()
+
+    system_libs = {
+        "libc.so.6", "libm.so.6", "libpthread.so.0", "libdl.so.2",
+        "librt.so.1", "libgcc_s.so.1", "libstdc++.so.6", "ld-linux-x86-64.so.2"
+    }
+
+    while queue:
+        binary = queue.pop(0)
+        if binary in visited or not binary.exists():
+            continue
+        visited.add(binary)
+
+        try:
+            out = subprocess.check_output([objdump, "-p", str(binary)], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                line = line.strip()
+                if "NEEDED" in line:
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        so_name = parts[-1].lower()
+                        if so_name in system_libs:
+                            continue
+                        if so_name in available_sos and so_name not in resolved:
+                            so_path = available_sos[so_name]
+                            resolved[so_name] = so_path
+                            queue.append(so_path)
+        except Exception:
+            pass
+
+    return list(resolved.values())
+
+LINUX_REL_DIR = SCRIPT_DIR / "build/linux-rel"
+LINUX_BUILD_EXE = LINUX_REL_DIR / "OpenPlayer"
+LINUX_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"
+LINUX_SLINT_SO = LINUX_REL_DIR / "_deps/slint-build/libslint_cpp.so"
+LINUX_DLLS = [
+    LINUX_SLINT_SO,
+    *get_required_sos(
+        entry_binaries=[LINUX_BUILD_EXE, LINUX_SLINT_SO],
+        search_dirs=[
+            LINUX_REL_DIR / "_deps/slint-build",
+            LINUX_REL_DIR,
+            Path("/usr/lib"),
+            Path("/usr/lib/x86_64-linux-gnu"),
+            ],
+        objdump="objdump",
+    ),
+]
+
+LINUX_DEBUG_DIR = SCRIPT_DIR / "build/linux-debug"
+LINUX_DEBUG_BUILD_EXE = LINUX_DEBUG_DIR / "OpenPlayer"
+LINUX_DEBUG_EXPORT_DIR = SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"
+LINUX_DEBUG_SLINT_SO = LINUX_DEBUG_DIR / "_deps/slint-build/libslint_cpp.so"
+LINUX_DEBUG_DLLS = [
+    LINUX_DEBUG_SLINT_SO,
+    *get_required_sos(
+        entry_binaries=[LINUX_DEBUG_BUILD_EXE, LINUX_DEBUG_SLINT_SO],
+        search_dirs=[
+            LINUX_DEBUG_DIR / "_deps/slint-build",
+            LINUX_DEBUG_DIR,
+            Path("/usr/lib"),
+            Path("/usr/lib/x86_64-linux-gnu"),
+            ],
+        objdump="objdump",
+    ),
+]
 
 WINDOWS_X64_BUILD_DIR = SCRIPT_DIR / "build/windows-rel-x64"
 WINDOWS_X64_BUILD_EXE = WINDOWS_X64_BUILD_DIR / "OpenPlayer.exe"
@@ -92,145 +165,67 @@ WINDOWS_X86_DLLS = [
     ),
 ]
 
-lxExportZip = Path(f"{LINUX_EXPORT_DIR}.zip")
-lxDEBUGExportZip = Path(f"{LINUX_DEBUG_EXPORT_DIR}.zip")
-wdX64ExportZip = Path(f"{WINDOWS_X64_EXPORT_DIR}.zip")
-wdX64DEBUGExportZip = Path(f"{WINDOWS_DEBUG_X64_EXPORT_DIR}.zip")
-wdX86ExportZip = Path(f"{WINDOWS_X86_EXPORT_DIR}.zip")
-
-if LINUX_EXPORT_DIR.exists():
-    shutil.rmtree(LINUX_EXPORT_DIR)
-    print("Removed old Linux export")
-if lxExportZip.exists():
-    lxExportZip.unlink()
-    print("Removed old Linux export -> zip")
-if LINUX_DEBUG_EXPORT_DIR.exists():
-    shutil.rmtree(LINUX_DEBUG_EXPORT_DIR)
-    print("Removed old Linux DEBUG export")
-if lxDEBUGExportZip.exists():
-    lxDEBUGExportZip.unlink()
-    print("Removed old Linux DEBUG export -> zip")
-
-if WINDOWS_X64_EXPORT_DIR.exists():
-    shutil.rmtree(WINDOWS_X64_EXPORT_DIR)
-    print("Removed old Windows X64 export")
-if wdX64ExportZip.exists():
-    wdX64ExportZip.unlink()
-    print("Removed old Windows X64 export -> zip")
-if WINDOWS_DEBUG_X64_EXPORT_DIR.exists():
-    shutil.rmtree(WINDOWS_DEBUG_X64_EXPORT_DIR)
-    print("Removed old Windows DEBUG X64 export")
-if wdX64DEBUGExportZip.exists():
-    wdX64DEBUGExportZip.unlink()
-    print("Removed old Windows DEBUG X64 export -> zip")
-
-if WINDOWS_X86_EXPORT_DIR.exists():
-    shutil.rmtree(WINDOWS_X86_EXPORT_DIR)
-    print("Removed old Windows X86 export")
-if wdX86ExportZip.exists():
-    wdX86ExportZip.unlink()
-    print("Removed old Windows X86 export -> zip")
+for export_dir in [LINUX_EXPORT_DIR, LINUX_DEBUG_EXPORT_DIR, WINDOWS_X64_EXPORT_DIR, WINDOWS_DEBUG_X64_EXPORT_DIR, WINDOWS_X86_EXPORT_DIR]:
+    if export_dir.exists():
+        shutil.rmtree(export_dir)
+    zip_path = Path(f"{export_dir}.zip")
+    if zip_path.exists():
+        zip_path.unlink()
 
 LINUX_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 LINUX_DEBUG_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-
-if LINUX_BUILD_EXE.exists():
-    destination = LINUX_EXPORT_DIR / "OpenPlayer"
-    shutil.copy(str(LINUX_BUILD_EXE), str(destination))
-    print(f"Moved Linux binary to -> {destination.relative_to(SCRIPT_DIR)}")
-else:
-    print(f"Error -> Linux binary not found at: {LINUX_BUILD_EXE.relative_to(SCRIPT_DIR)}")
-    sys.exit()
-
-if LINUX_SLINT_SO.exists():
-    destination = LINUX_EXPORT_DIR / "libslint_cpp.so"
-    shutil.copy(str(LINUX_SLINT_SO), str(destination))
-    print(f"Moved Linux shared library to -> {destination.relative_to(SCRIPT_DIR)}")
-else:
-    print(f"Error -> Linux shared library not found at: {LINUX_SLINT_SO.relative_to(SCRIPT_DIR)}")
-    sys.exit()
-
-if LINUX_DEBUG_BUILD_EXE.exists():
-    destination = LINUX_DEBUG_EXPORT_DIR / "OpenPlayer"
-    shutil.copy(str(LINUX_DEBUG_BUILD_EXE), str(destination))
-    print(f"Moved Linux DEBUG binary to -> {destination.relative_to(SCRIPT_DIR)}")
-else:
-    print(f"Error -> Linux DEBUG binary not found at: {LINUX_DEBUG_BUILD_EXE.relative_to(SCRIPT_DIR)}")
-    sys.exit()
-
-if LINUX_DEBUG_SLINT_SO.exists():
-    destination = LINUX_DEBUG_EXPORT_DIR / "libslint_cpp.so"
-    shutil.copy(str(LINUX_DEBUG_SLINT_SO), str(destination))
-    print(f"Moved Linux DEBUG shared library to -> {destination.relative_to(SCRIPT_DIR)}")
-else:
-    print(f"Error -> Linux DEBUG shared library not found at: {LINUX_DEBUG_SLINT_SO.relative_to(SCRIPT_DIR)}")
-    sys.exit()
-
 WINDOWS_X64_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 WINDOWS_DEBUG_X64_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 WINDOWS_X86_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
+if LINUX_BUILD_EXE.exists():
+    shutil.copy(str(LINUX_BUILD_EXE), str(LINUX_EXPORT_DIR / "OpenPlayer"))
+
+    for so in LINUX_DLLS:
+        if so.exists():
+            print(f"Copying {so.name} -> Linux release")
+            shutil.copy(str(so), str(LINUX_EXPORT_DIR))
+else:
+    print(f"Error -> Linux binary not found at: {LINUX_BUILD_EXE}")
+    sys.exit(1)
+
+if LINUX_DEBUG_BUILD_EXE.exists():
+    shutil.copy(str(LINUX_DEBUG_BUILD_EXE), str(LINUX_DEBUG_EXPORT_DIR / "OpenPlayer"))
+
+    for so in LINUX_DEBUG_DLLS:
+        if so.exists():
+            print(f"Copying {so.name} -> Linux DEBUG")
+            shutil.copy(str(so), str(LINUX_DEBUG_EXPORT_DIR))
+
+else:
+    print(f"Warning -> Linux DEBUG binary not found at: {LINUX_DEBUG_BUILD_EXE}")
+
 if WINDOWS_X64_BUILD_EXE.exists():
-    destination = WINDOWS_X64_EXPORT_DIR / "OpenPlayer.exe"
-    shutil.copy(str(WINDOWS_X64_BUILD_EXE), str(destination))
-    print(f"Moved Windows x64 binary to -> {destination.relative_to(SCRIPT_DIR)}")
+    shutil.copy(str(WINDOWS_X64_BUILD_EXE), str(WINDOWS_X64_EXPORT_DIR / "OpenPlayer.exe"))
 else:
-    print(f"Error -> Windows x64 binary not found at: {WINDOWS_X64_BUILD_EXE.relative_to(SCRIPT_DIR)}")
-    sys.exit()
+    print(f"Error -> Windows x64 binary not found at: {WINDOWS_X64_BUILD_EXE}")
+    sys.exit(1)
+
 if WINDOWS_DEBUG_X64_BUILD_EXE.exists():
-    destination = WINDOWS_DEBUG_X64_EXPORT_DIR / "OpenPlayer.exe"
-    shutil.copy(str(WINDOWS_DEBUG_X64_BUILD_EXE), str(destination))
-    print(f"Moved Windows x64 DEBUG binary to -> {destination.relative_to(SCRIPT_DIR)}")
+    shutil.copy(str(WINDOWS_DEBUG_X64_BUILD_EXE), str(WINDOWS_DEBUG_X64_EXPORT_DIR / "OpenPlayer.exe"))
 else:
-    print(f"Error -> Windows x64 DEBUG binary not found at: {WINDOWS_DEBUG_X64_BUILD_EXE.relative_to(SCRIPT_DIR)}")
-    sys.exit()
+    print(f"Warning -> Windows x64 DEBUG binary not found")
 
 if WINDOWS_X86_BUILD_EXE.exists():
-    destination = WINDOWS_X86_EXPORT_DIR / "OpenPlayer.exe"
-    shutil.copy(str(WINDOWS_X86_BUILD_EXE), str(destination))
-    print(f"Moved Windows x86 binary to -> {destination.relative_to(SCRIPT_DIR)}")
+    shutil.copy(str(WINDOWS_X86_BUILD_EXE), str(WINDOWS_X86_EXPORT_DIR / "OpenPlayer.exe"))
 else:
-    print(f"Error -> Windows x86 binary not found at: {WINDOWS_X86_BUILD_EXE.relative_to(SCRIPT_DIR)}")
-    sys.exit()
+    print(f"Warning -> Windows x86 binary not found")
 
 for dll in WINDOWS_X64_DLLS:
-    print(f"Copying {str(dll)} -> Windows x64")
     shutil.copy(str(dll), str(WINDOWS_X64_EXPORT_DIR))
 for dll in WINDOWS_DEBUG_X64_DLLS:
-    print(f"Copying {str(dll)} -> Windows x64 DEBUG")
     shutil.copy(str(dll), str(WINDOWS_DEBUG_X64_EXPORT_DIR))
 for dll in WINDOWS_X86_DLLS:
-    print(f"Copying {str(dll)} -> Windows x86")
     shutil.copy(str(dll), str(WINDOWS_X86_EXPORT_DIR))
 
-shutil.make_archive(
-    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Linux"),
-    format="zip",
-    root_dir=str(LINUX_EXPORT_DIR)
-)
-print("Compressed OpenPlayer_Linux.zip")
-shutil.make_archive(
-    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Linux_DEBUG"),
-    format="zip",
-    root_dir=str(LINUX_DEBUG_EXPORT_DIR)
-)
-print("Compressed OpenPlayer_Linux_DEBUG.zip")
+for export_dir in [LINUX_EXPORT_DIR, LINUX_DEBUG_EXPORT_DIR, WINDOWS_X64_EXPORT_DIR, WINDOWS_DEBUG_X64_EXPORT_DIR, WINDOWS_X86_EXPORT_DIR]:
+    if any(export_dir.iterdir()):
+        shutil.make_archive(base_name=str(export_dir), format="zip", root_dir=str(export_dir))
+        print(f"Compressed {export_dir.name}.zip")
 
-shutil.make_archive(
-    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64"),
-    format="zip",
-    root_dir=str(WINDOWS_X64_EXPORT_DIR)
-)
-shutil.make_archive(
-    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x64_DEBUG"),
-    format="zip",
-    root_dir=str(WINDOWS_DEBUG_X64_EXPORT_DIR)
-)
-
-print("Compressed OpenPlayer_Win_x64.zip")
-shutil.make_archive(
-    base_name=str(SCRIPT_DIR / "EXPORT/OpenPlayer_Win_x86"),
-    format="zip",
-    root_dir=str(WINDOWS_X86_EXPORT_DIR)
-)
-print("Compressed OpenPlayer_Win_x86.zip")
+print("All exports generated successfully!")
