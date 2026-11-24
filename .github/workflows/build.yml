@@ -66,7 +66,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo mkdir -p /usr/local/bin
-          sudo tee /usr/bin/make << 'EOF' > /dev/null
+          sudo bash -c 'cat << "EOF" > /usr/local/bin/make
           #!/usr/bin/env bash
           new_args=()
           for args in "$@"; do
