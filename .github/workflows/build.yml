@@ -66,17 +66,14 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo mkdir -p /usr/local/bin
-          sudo bash -c 'cat << "EOF" > /usr/local/bin/make
-          #!/usr/bin/env bash
-          new_args=()
-          for args in "$@"; do
-            if [ "$arg" = "s" ]; then
-              continue
-            fi
-            new_args+=("$arg")
-          done
-          exec /usr/bin/make "${new_args[@]}"
-          EOF
+          echo '#!/usr/bin/env bash' > ./make_wrapper
+          echo 'new_args=()' >> ./make_wrapper
+          echo 'for arg in "$@"; do' >> ./make_wrapper
+          echo '  if [ "$arg" = "s" ]; then continue; fi' >> ./make_wrapper
+          echo '  new_args+=("$arg")' >> ./make_wrapper
+          echo 'done' >> ./make_wrapper
+          echo 'exec /usr/bin/make "${new_args[@]}"' >> ./make_wrapper
+          sudo mv ./make_wrapper /usr/local/bin/make
           sudo chmod +x /usr/local/bin/make
 
       - name: Configure CMake
