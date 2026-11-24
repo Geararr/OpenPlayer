@@ -65,6 +65,7 @@ jobs:
       - name: Fix GNU Make 4.4 Jobserver Bug (Linux)
         if: runner.os == 'Linux'
         run: |
+          sudo mkdir -p /usr/local/bin
           sudo tee /usr/bin/make << 'EOF' > /dev/null
           #!/usr/bin/env bash
           new_args=()
