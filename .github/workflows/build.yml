@@ -25,21 +25,20 @@ jobs:
     env:
       MAKEFLAGS: ""
       CARGO_BUILD_JOBS: "1"
-      MAKE: /usr/local/bin/make-safe
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install dependencies (Linux)
+      - name: Fix GNU Make 4.4 Jobserver Bug & Install Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libfontconfig1-dev
           
-          sudo mkdir -p /usr/local/bin
-          sudo tee /usr/local/bin/make-safe << 'EOF' > /dev/null
+          sudo cp /usr/bin/make /usr/bin/make.real
+          sudo tee /usr/bin/make << 'EOF' > /dev/null
           #!/usr/bin/env bash
           new_args=()
           for arg in "$@"; do
@@ -48,9 +47,9 @@ jobs:
             fi
             new_args+=("$arg")
           done
-          exec /usr/bin/make "${new_args[@]}"
+          exec /usr/bin/make.real "${new_args[@]}"
           EOF
-          sudo chmod +x /usr/local/bin/make-safe
+          sudo chmod +x /usr/bin/make
 
       - name: Setup vcpkg
         run: |
