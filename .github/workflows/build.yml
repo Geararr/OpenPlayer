@@ -65,16 +65,19 @@ jobs:
       - name: Fix GNU Make 4.4 Jobserver Bug (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo mkdir -p /usr/local/bin
-          echo '#!/usr/bin/env bash' > ./make_wrapper
-          echo 'new_args=()' >> ./make_wrapper
-          echo 'for arg in "$@"; do' >> ./make_wrapper
-          echo '  if [ "$arg" = "s" ]; then continue; fi' >> ./make_wrapper
-          echo '  new_args+=("$arg")' >> ./make_wrapper
-          echo 'done' >> ./make_wrapper
-          echo 'exec /usr/bin/make "${new_args[@]}"' >> ./make_wrapper
-          sudo mv ./make_wrapper /usr/local/bin/make
-          sudo chmod +x /usr/local/bin/make
+          sudo mv /usr/bin/make /usr/bin/make.real
+          sudo tee /usr/bin/cmake << 'EOF' > /dev/null
+          #!/usr/bin/env bash
+          new_args=()
+          for arg in "$@"; do
+            if [ "$arg" = "s" ]; then
+              continue
+            fi
+            new_arg+=("$arg")
+          done
+          exec /usr/bin/make.real "${new_args[@]}"
+          EOF
+          sudo chmod +x /usr/bin/make
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" ${{ matrix.arch && format('-A {0}', matrix.arch) || '' }}
