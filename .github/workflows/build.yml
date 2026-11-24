@@ -23,7 +23,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-      MAKEFLAGS: ""
       CARGO_BUILD_JOBS: "1"
 
     steps:
@@ -31,27 +30,13 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Fix GNU Make 4.4 Jobserver Bug & Install Dependencies (Linux)
+      - name: Install Make 4.3 & Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libfontconfig1-dev
-          
-          sudo cp /usr/bin/make /usr/bin/make.real
-          sudo tee /usr/bin/make << 'EOF' > /dev/null
-          
-          export MAKEFLAGS=$(echo "$MAKEFLAGS" | sed 's/\bs\b//g')
-          
-          new_args=()
-          for arg in "$@"; do
-            if [ "$arg" = "s" ]; then
-              continue
-            fi
-            new_args+=("$arg")
-          done
-          exec /usr/bin/make.real "${new_args[@]}"
-          EOF
-          sudo chmod +x /usr/bin/make
+          sudo apt-get install -y libfontconfig1-dev
+          wget http://mirrors.kernel.org/ubuntu/pool/main/m/make-dfsg/make_4.3-4.1build1_amd64.deb
+          sudo dpkg -i make_4.3-4.1build1_amd64.deb
 
       - name: Setup vcpkg
         run: |
@@ -91,7 +76,6 @@ jobs:
 
       - name: Build Project
         env:
-          MAKEFLAGS: ""
           CARGO_BUILD_JOBS: "1"
         run: cmake --build build --config Release
 
