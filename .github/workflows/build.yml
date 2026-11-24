@@ -62,6 +62,22 @@ jobs:
         run: Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_ROOT=$env:GITHUB_WORKSPACE/vcpkg"
         shell: pwsh
 
+      - name: Fix GNU Make 4.4 Jobserver Bug (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo tee /usr/bin/make << 'EOF' > /dev/null
+          #!/usr/bin/env bash
+          new_args=()
+          for args in "$@"; do
+            if [ "$arg" = "s" ]; then
+              continue
+            fi
+            new_args+=("$arg")
+          done
+          exec /usr/bin/make "${new_args[@]}"
+          EOF
+          sudo chmod +x /usr/local/bin/make
+
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" ${{ matrix.arch && format('-A {0}', matrix.arch) || '' }}
 
