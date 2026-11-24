@@ -65,7 +65,6 @@ jobs:
       - name: Fix GNU Make 4.4 Jobserver Bug (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo mv /usr/bin/make /usr/bin/make.real
           sudo tee /usr/bin/cmake << 'EOF' > /dev/null
           #!/usr/bin/env bash
           new_args=()
@@ -75,7 +74,7 @@ jobs:
             fi
             new_arg+=("$arg")
           done
-          exec /usr/bin/make.real "${new_args[@]}"
+          exec /usr/bin/make "${new_args[@]}"
           EOF
           sudo chmod +x /usr/bin/make
 
