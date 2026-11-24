@@ -39,7 +39,9 @@ jobs:
           
           sudo cp /usr/bin/make /usr/bin/make.real
           sudo tee /usr/bin/make << 'EOF' > /dev/null
-          #!/usr/bin/env bash
+          
+          export MAKEFLAGS=$(echo "$MAKEFLAGS" | sed 's/\bs\b//g')
+          
           new_args=()
           for arg in "$@"; do
             if [ "$arg" = "s" ]; then
