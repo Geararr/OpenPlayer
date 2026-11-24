@@ -1,0 +1,16 @@
+{
+    cmdlines = {
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake build -r -y",
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake project -k compile_commands",
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake project -k compile_commands",
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake build -r -y",
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake build -y",
+        "xmake project -k compile_commands",
+        "xmake config -y -m debug -p linux -a x86_64"
+    }
+}

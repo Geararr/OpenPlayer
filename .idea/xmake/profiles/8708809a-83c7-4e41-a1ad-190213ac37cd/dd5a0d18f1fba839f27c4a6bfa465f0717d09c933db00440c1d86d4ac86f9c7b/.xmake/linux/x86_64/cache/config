@@ -1,0 +1,11 @@
+{
+    recheck = false,
+    mtimes = {
+        ["xmake.lua"] = 1795500483
+    },
+    options = {
+        mode = "release",
+        arch = "x86_64",
+        plat = "mingw"
+    }
+}

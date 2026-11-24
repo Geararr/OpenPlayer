@@ -1,0 +1,152 @@
+{
+    find_program_mingw_arch_x86_64_plat_mingw_checktoolar = {
+        ["x86_64-w64-mingw32-ar"] = "/usr/bin/x86_64-w64-mingw32-ar"
+    },
+    ["detect.sdks.find_ascend"] = {
+        ascend = false
+    },
+    find_program_fetch_package_system = {
+        ninja = "/usr/bin/ninja",
+        cmake = "/usr/bin/cmake"
+    },
+    ["detect.sdks.find_dotnet"] = {
+        dotnet = {
+            sdks = {
+                {
+                    version = "8.0.133",
+                    directory = "/usr/share/dotnet/sdk/8.0.133"
+                },
+                {
+                    version = "9.0.123",
+                    directory = "/usr/share/dotnet/sdk/9.0.123"
+                },
+                {
+                    version = "10.0.114",
+                    directory = "/usr/share/dotnet/sdk/10.0.114"
+                }
+            },
+            version = "10.0.114",
+            sdkdir = "/usr/share/dotnet/sdk/10.0.114",
+            bindir = "/usr/bin",
+            sdkver = "10.0.114",
+            runtimes = {
+                {
+                    version = "8.0.33",
+                    name = "Microsoft.NETCore.App"
+                },
+                {
+                    version = "9.0.22",
+                    name = "Microsoft.NETCore.App"
+                },
+                {
+                    version = "10.0.14",
+                    name = "Microsoft.NETCore.App"
+                }
+            }
+        }
+    },
+    ["detect.sdks.find_mingw"] = {
+        mingw = {
+            bindir = "/usr/bin",
+            sdkdir = "/usr",
+            cross = "x86_64-w64-mingw32-"
+        }
+    },
+    find_package_mingw_x86_64_fetch_package_xmake = {
+        ["xmake::nlohmann_json_942e578ec9634b1c912e6e1a23434b35_release_v3.12.0_external"] = {
+            version = "v3.12.0",
+            license = "MIT",
+            sysincludedirs = {
+                "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/942e578ec9634b1c912e6e1a23434b35/include"
+            }
+        },
+        ["xmake::utfcpp_c21c2379489346c7a62be73e4878248f_release_v5.0.0_external"] = {
+            version = "v5.0.0",
+            license = "BSL-1.0",
+            sysincludedirs = {
+                "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/c21c2379489346c7a62be73e4878248f/include",
+                "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/c21c2379489346c7a62be73e4878248f/include/utf8cpp"
+            }
+        },
+        ["xmake::taglib_e3d14e72a57f4852876ee3eb683025d0_release_v2.3.2_external"] = {
+            static = true,
+            defines = "TAGLIB_STATIC",
+            version = "v2.3.2",
+            sysincludedirs = {
+                "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/include"
+            },
+            libfiles = {
+                "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib/libtag_c.a",
+                "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib/libtag.a"
+            },
+            links = {
+                "tag_c",
+                "tag"
+            },
+            license = "LGPL-2.1",
+            linkdirs = {
+                "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib"
+            }
+        },
+        ["xmake::zlib_edcff9b9240940b7848e65d9c9a1bedf_release_v1.4_external"] = {
+            static = true,
+            version = "v1.4",
+            sysincludedirs = {
+                "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/include"
+            },
+            libfiles = {
+                "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/lib/libz.a"
+            },
+            links = {
+                "z"
+            },
+            license = "zlib",
+            linkdirs = {
+                "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/lib"
+            }
+        },
+        ["xmake::slint_source_fdfc2626f4e24040947df2923db91830_release_v1.18.0_external"] = {
+            version = "v1.18.0",
+            sysincludedirs = {
+                "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/include"
+            },
+            libfiles = {
+                "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/lib/libslint_cpp.a"
+            },
+            static = true,
+            links = {
+                "slint_cpp"
+            },
+            linkdirs = {
+                "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/lib"
+            }
+        }
+    },
+    find_programver = {
+        ["/usr/bin/dotnet"] = "10.0.114"
+    },
+    find_program_fetch_package_xmake = {
+        ninja = false,
+        cmake = false
+    },
+    find_program_mingw_arch_x86_64_plat_mingw_checktoolld = {
+        ["x86_64-w64-mingw32-g++"] = "/usr/bin/x86_64-w64-mingw32-g++"
+    },
+    find_program = {
+        tar = "/usr/bin/tar",
+        curl = "/usr/bin/curl",
+        nim = false,
+        git = "/usr/bin/git",
+        gzip = "/usr/bin/gzip",
+        zig = false,
+        gcc = "/usr/bin/gcc",
+        dotnet = "/usr/bin/dotnet"
+    },
+    find_programver_fetch_package_system = {
+        ["/usr/bin/ninja"] = "1.13.2",
+        ["/usr/bin/cmake"] = "4.5.0"
+    },
+    find_program_mingw_arch_x86_64_plat_mingw_checktoolcxx = {
+        ["x86_64-w64-mingw32-g++"] = "/usr/bin/x86_64-w64-mingw32-g++"
+    }
+}

@@ -1,0 +1,8 @@
+{
+    cmdlines = {
+        "xmake config -y -m release -p mingw -a i386",
+        "xmake config -y -m release -p mingw -a i386",
+        "xmake config -y -m release -p mingw -a i386",
+        "xmake config -y -m release -p mingw -a i386"
+    }
+}

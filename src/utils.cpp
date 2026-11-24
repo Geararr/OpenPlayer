@@ -3,7 +3,7 @@
 #include <random>
 #include <unordered_map>
 #include <filesystem>
-#include <slint/slint.h>
+#include <slint.h>
 #include <malloc.h>
 
 #include <cstring>
@@ -261,9 +261,14 @@ slint::Image SoundData::GetImageFromBytes(const std::string& assetKey, const int
 
 std::filesystem::path SoundData::getDataDir(const DataType type) { // 0 = config, 1 = cache
 #ifdef _WIN32
-    wchar_t path[MAX_PATH] = { 0 };
-    GetModuleFileNameW(nullptr, path, MAX_PATH);
-    return std::filesystem::path(path).parent_path();
+    if (type != DataType::Music) {
+        wchar_t path[MAX_PATH] = { 0 };
+        GetModuleFileNameW(nullptr, path, MAX_PATH);
+        return std::filesystem::path(path).parent_path();
+    }
+    else {
+        return configManager_->getConfig().value("music-directory", "");
+    }
 #else
     const char* homeDir = std::getenv("HOME");
     if (homeDir) {

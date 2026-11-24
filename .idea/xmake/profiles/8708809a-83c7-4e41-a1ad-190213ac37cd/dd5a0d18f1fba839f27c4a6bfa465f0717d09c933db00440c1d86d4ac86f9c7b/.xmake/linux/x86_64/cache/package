@@ -1,0 +1,56 @@
+{
+    slint_source = {
+        __enabled = true,
+        __requirestr = "slint_source v1.18.0",
+        static = true,
+        version = "v1.18.0",
+        sysincludedirs = "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/include",
+        linkdirs = "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/lib",
+        links = "slint_cpp",
+        libfiles = "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830/lib/libslint_cpp.a",
+        installdir = "/home/gear/.xmake/packages/s/slint_source/v1.18.0/fdfc2626f4e24040947df2923db91830"
+    },
+    nlohmann_json = {
+        __enabled = true,
+        version = "v3.12.0",
+        sysincludedirs = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/942e578ec9634b1c912e6e1a23434b35/include",
+        __requirestr = "nlohmann_json",
+        license = "MIT",
+        installdir = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/942e578ec9634b1c912e6e1a23434b35"
+    },
+    taglib = {
+        __enabled = true,
+        defines = "TAGLIB_STATIC",
+        __requirestr = "taglib",
+        static = true,
+        license = "LGPL-2.1",
+        installdir = "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0",
+        version = "v2.3.2",
+        sysincludedirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/c21c2379489346c7a62be73e4878248f/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/c21c2379489346c7a62be73e4878248f/include/utf8cpp",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/include"
+        },
+        libfiles = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib/libtag_c.a",
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib/libtag.a",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/lib/libz.a"
+        },
+        links = {
+            "tag_c",
+            "tag",
+            "z"
+        },
+        envs = {
+            PATH = {
+                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
+                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin"
+            }
+        },
+        linkdirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/e3d14e72a57f4852876ee3eb683025d0/lib",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/edcff9b9240940b7848e65d9c9a1bedf/lib"
+        }
+    }
+}

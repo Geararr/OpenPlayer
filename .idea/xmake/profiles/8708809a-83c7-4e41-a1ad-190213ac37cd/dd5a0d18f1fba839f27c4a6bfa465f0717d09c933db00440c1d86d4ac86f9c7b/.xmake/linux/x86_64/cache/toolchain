@@ -1,0 +1,222 @@
+{
+    zig_arch_x86_64_plat_linux = {
+        __checked = false,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    fasm_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    clang_arch_x86_64_plat_linux = {
+        plat = "linux",
+        arch = "x86_64"
+    },
+    fasm_arch_x86_64_plat_mingw = {
+        __checked = false,
+        __global = true,
+        arch = "x86_64",
+        plat = "mingw"
+    },
+    go_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    gfortran_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    clang_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    mingw_arch_x86_64_plat_mingw = {
+        mingw = "/usr",
+        __global = true,
+        plat = "mingw",
+        __checked = true,
+        bindir = "/usr/bin",
+        arch = "x86_64",
+        cross = "x86_64-w64-mingw32-"
+    },
+    tool_target_OpenPlayer_mingw_x86_64_ld = {
+        toolname = "gxx",
+        toolchain_info = {
+            cachekey = "mingw_arch_x86_64_plat_mingw",
+            name = "mingw",
+            plat = "mingw",
+            arch = "x86_64"
+        },
+        program = "/usr/bin/x86_64-w64-mingw32-g++"
+    },
+    tool_target_OpenPlayer_mingw_x86_64_ar = {
+        toolname = "ar",
+        toolchain_info = {
+            cachekey = "mingw_arch_x86_64_plat_mingw",
+            name = "mingw",
+            plat = "mingw",
+            arch = "x86_64"
+        },
+        program = "/usr/bin/x86_64-w64-mingw32-ar"
+    },
+    tool_platform_mingw_x86_64_cxx = {
+        toolname = "gxx",
+        toolchain_info = {
+            cachekey = "mingw_arch_x86_64_plat_mingw",
+            name = "mingw",
+            plat = "mingw",
+            arch = "x86_64"
+        },
+        program = "/usr/bin/x86_64-w64-mingw32-g++"
+    },
+    nasm_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    fpc_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    rust_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    gcc_arch_x86_64_plat_linux = {
+        __checked = {
+            name = "gcc",
+            program = "/usr/bin/gcc"
+        },
+        arch = "x86_64",
+        plat = "linux"
+    },
+    nim_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    go_arch_x86_64_plat_mingw = {
+        __checked = false,
+        __global = true,
+        arch = "x86_64",
+        plat = "mingw"
+    },
+    nasm_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    nim_arch_x86_64_plat_linux = {
+        __checked = false,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    ascendc_arch_x86_64_plat_linux = {
+        __checked = false,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    cuda_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    zig_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    yasm_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    cuda_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    yasm_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    cross_arch_x86_64_plat_linux = {
+        plat = "linux",
+        arch = "x86_64"
+    },
+    envs_arch_x86_64_plat_mingw = {
+        __checked = false,
+        __global = true,
+        arch = "x86_64",
+        plat = "mingw"
+    },
+    swift_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    gfortran_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    dotnet_arch_x86_64_plat_linux = {
+        sdkver = "10.0.114",
+        sdkdir = "/usr/share/dotnet/sdk/10.0.114",
+        __checked = true,
+        bindir = "/usr/bin",
+        plat = "linux",
+        arch = "x86_64"
+    },
+    swift_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    fpc_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    rust_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    nasm_arch_x86_64_plat_mingw = {
+        __checked = false,
+        __global = true,
+        arch = "x86_64",
+        plat = "mingw"
+    },
+    msvc_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    tool_target_OpenPlayer_mingw_x86_64_cxx = {
+        toolname = "gxx",
+        toolchain_info = {
+            cachekey = "mingw_arch_x86_64_plat_mingw",
+            name = "mingw",
+            plat = "mingw",
+            arch = "x86_64"
+        },
+        program = "/usr/bin/x86_64-w64-mingw32-g++"
+    },
+    yasm_arch_x86_64_plat_mingw = {
+        __checked = false,
+        __global = true,
+        arch = "x86_64",
+        plat = "mingw"
+    },
+    envs_arch_x86_64_plat_linux = {
+        __checked = true,
+        arch = "x86_64",
+        plat = "linux"
+    },
+    dotnet_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    },
+    go_arch_x86_64_plat_windows = {
+        plat = "windows",
+        arch = "x86_64"
+    }
+}

@@ -1,0 +1,22 @@
+{
+    tbb = {
+        __requirestr = "tbb",
+        __enabled = false
+    },
+    taglib = {
+        __requirestr = "taglib",
+        __enabled = false
+    },
+    libvips = {
+        __requirestr = "libvips",
+        __enabled = false
+    },
+    nlohmann_json = {
+        __requirestr = "nlohmann_json",
+        __enabled = false
+    },
+    slint = {
+        __requirestr = "slint",
+        __enabled = false
+    }
+}

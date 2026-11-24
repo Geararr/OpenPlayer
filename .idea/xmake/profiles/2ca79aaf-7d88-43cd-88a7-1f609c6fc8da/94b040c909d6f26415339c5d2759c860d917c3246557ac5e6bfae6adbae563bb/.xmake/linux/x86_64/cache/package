@@ -1,0 +1,49 @@
+{
+    nlohmann_json = {
+        __requirestr = "nlohmann_json",
+        __enabled = true,
+        version = "v3.12.0",
+        license = "MIT",
+        installdir = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/1345207c88134fbc93af8ad5d60ec8e0",
+        sysincludedirs = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/1345207c88134fbc93af8ad5d60ec8e0/include"
+    },
+    taglib = {
+        libfiles = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f/lib/libtag_c.a",
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f/lib/libtag.a",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/264affa4ed7347e999d99d8958b86a3e/lib/libz.a"
+        },
+        defines = "TAGLIB_STATIC",
+        envs = {
+            PATH = {
+                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
+                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin"
+            }
+        },
+        version = "v2.3.2",
+        static = true,
+        linkdirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f/lib",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/264affa4ed7347e999d99d8958b86a3e/lib"
+        },
+        installdir = "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f",
+        license = "LGPL-2.1",
+        __requirestr = "taglib",
+        links = {
+            "tag_c",
+            "tag",
+            "z"
+        },
+        __enabled = true,
+        sysincludedirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/f8aa9a72920f4b25ba746b99da8ac6d1/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/f8aa9a72920f4b25ba746b99da8ac6d1/include/utf8cpp",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/264affa4ed7347e999d99d8958b86a3e/include"
+        }
+    },
+    slint_source = {
+        __requirestr = "slint_source v1.18.0",
+        __enabled = false
+    }
+}

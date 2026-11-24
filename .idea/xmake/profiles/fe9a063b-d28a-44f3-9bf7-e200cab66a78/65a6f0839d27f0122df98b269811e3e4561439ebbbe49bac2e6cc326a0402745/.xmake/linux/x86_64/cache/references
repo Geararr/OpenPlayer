@@ -1,0 +1,16 @@
+{
+    packages = {
+        "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/7395a594aa9f4c4b88014b761dd862f3",
+        "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/60de745a2b2b45c196c0c2a61fda8f2f",
+        "/home/gear/.xmake/packages/z/zlib/v1.4/0d8d97c114764fb0b6be13c7a8851156",
+        "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc",
+        "/home/gear/.xmake/packages/l/libffi/3.4.8/9296dfedd2f64ac9b19b70b77b9c0738",
+        "/home/gear/.xmake/packages/l/libiconv/1.18/0cd223b988e74d0990e1fb02554e74d1",
+        "/home/gear/.xmake/packages/a/autotools/latest/725e51fe81b74141ade9efbd3ccaf900",
+        "/home/gear/.xmake/packages/l/libelf/0.8.13/2095098d67144c18b074c570a4b3f1b6",
+        "/home/gear/.xmake/packages/p/pcre2/10.47/3037b91dcbbc4e5dae4eb4de7a156f04",
+        "/home/gear/.xmake/packages/g/glib/2.89.2/44eef961c7284a3eab3f3194ebff637b",
+        "/home/gear/.xmake/packages/e/expat/2.10.0/cff1e3eab9a84a61ab0554896b76bc93",
+        "/home/gear/.xmake/packages/l/libvips/v8.18.7/df01f035222144de9392c58847ae0882"
+    }
+}

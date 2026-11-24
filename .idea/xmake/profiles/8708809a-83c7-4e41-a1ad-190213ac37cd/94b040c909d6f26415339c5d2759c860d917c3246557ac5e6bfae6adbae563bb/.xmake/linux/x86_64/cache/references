@@ -1,0 +1,12 @@
+{
+    packages = {
+        "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/1345207c88134fbc93af8ad5d60ec8e0",
+        "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/f8aa9a72920f4b25ba746b99da8ac6d1",
+        "/home/gear/.xmake/packages/z/zlib/v1.4/264affa4ed7347e999d99d8958b86a3e",
+        "/home/gear/.xmake/packages/t/taglib/v2.3.2/d7034b93886f4d75aa57f95b7f3ec08f",
+        "/home/gear/.xmake/packages/l/libffi/3.4.8/6f78424e094242c8ba7c8efaf7d9aa8c",
+        "/home/gear/.xmake/packages/l/libintl/1.0/698d14d4c7d54307aaa3aac1f8e69be1",
+        "/home/gear/.xmake/packages/p/pcre2/10.47/18db7bf57f5d4aa7a5fb265f8cb85310",
+        "/home/gear/.xmake/packages/e/expat/2.10.0/bdeca99e874b4d00a77cb9be1f5af63f"
+    }
+}

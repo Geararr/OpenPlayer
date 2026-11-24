@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="XMakeBuildProfiles">
+    <option name="profiles">
+      <list>
+        <XMakeBuildProfile>
+          <option name="androidNdkDirectory" value="" />
+          <option name="architecture" value="x86_64" />
+          <option name="buildDirectory" value="" />
+          <option name="buildMode" value="debug" />
+          <option name="configureArguments" value="" />
+          <option name="id" value="51f7e487-776c-478d-ad62-d8335b8f7e29" />
+          <option name="name" value="Linux-x64-Debug" />
+          <option name="platform" value="linux" />
+          <option name="toolchain" value="default" />
+          <option name="toolkitId" value="386e6f60-e4c3-3fa6-9c88-d48f3f9665a2" />
+          <option name="verbose" value="false" />
+        </XMakeBuildProfile>
+        <XMakeBuildProfile>
+          <option name="androidNdkDirectory" value="" />
+          <option name="architecture" value="x86_64" />
+          <option name="buildDirectory" value="" />
+          <option name="buildMode" value="release" />
+          <option name="configureArguments" value="" />
+          <option name="id" value="38aad7d3-9702-4832-b21a-b69b4c16604f" />
+          <option name="name" value="Linux-x64-Release" />
+          <option name="platform" value="linux" />
+          <option name="toolchain" value="default" />
+          <option name="toolkitId" value="386e6f60-e4c3-3fa6-9c88-d48f3f9665a2" />
+          <option name="verbose" value="false" />
+        </XMakeBuildProfile>
+        <XMakeBuildProfile>
+          <option name="androidNdkDirectory" value="" />
+          <option name="architecture" value="i386" />
+          <option name="buildDirectory" value="" />
+          <option name="buildMode" value="release" />
+          <option name="configureArguments" value="" />
+          <option name="id" value="fe9a063b-d28a-44f3-9bf7-e200cab66a78" />
+          <option name="name" value="Linux-x86-Release" />
+          <option name="platform" value="linux" />
+          <option name="toolchain" value="default" />
+          <option name="toolkitId" value="386e6f60-e4c3-3fa6-9c88-d48f3f9665a2" />
+          <option name="verbose" value="false" />
+        </XMakeBuildProfile>
+        <XMakeBuildProfile>
+          <option name="androidNdkDirectory" value="" />
+          <option name="architecture" value="x86_64" />
+          <option name="buildDirectory" value="" />
+          <option name="buildMode" value="release" />
+          <option name="configureArguments" value="" />
+          <option name="id" value="8708809a-83c7-4e41-a1ad-190213ac37cd" />
+          <option name="name" value="Windows-x64-Release" />
+          <option name="platform" value="mingw" />
+          <option name="toolchain" value="default" />
+          <option name="toolkitId" value="386e6f60-e4c3-3fa6-9c88-d48f3f9665a2" />
+          <option name="verbose" value="false" />
+        </XMakeBuildProfile>
+        <XMakeBuildProfile>
+          <option name="androidNdkDirectory" value="" />
+          <option name="architecture" value="i386" />
+          <option name="buildDirectory" value="" />
+          <option name="buildMode" value="release" />
+          <option name="configureArguments" value="" />
+          <option name="id" value="2ca79aaf-7d88-43cd-88a7-1f609c6fc8da" />
+          <option name="name" value="Windows-x86-Release" />
+          <option name="platform" value="mingw" />
+          <option name="toolchain" value="default" />
+          <option name="toolkitId" value="386e6f60-e4c3-3fa6-9c88-d48f3f9665a2" />
+          <option name="verbose" value="false" />
+        </XMakeBuildProfile>
+      </list>
+    </option>
+  </component>
+</project>

@@ -10,10 +10,12 @@
 #include <algorithm>
 #include <cctype>
 
+#ifndef _WIN32
 #include <vips/vips.h>
 #include <vips/vips8>
+#endif
 
-#include <slint/slint.h>
+#include <slint.h>
 
 #include <vector>
 #include <cstdint>

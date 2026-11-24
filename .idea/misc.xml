@@ -4,4 +4,15 @@
     <option name="pythonIntegrationState" value="YES" />
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CompDBSettings">
+    <option name="linkedExternalProjectsSettings">
+      <CompDBProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/compile_commands.json" />
+      </CompDBProjectSettings>
+    </option>
+  </component>
+  <component name="CompDBWorkspace" PROJECT_DIR="$PROJECT_DIR$/compile_commands.json">
+    <contentRoot DIR="$PROJECT_DIR$" />
+  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
 </project>

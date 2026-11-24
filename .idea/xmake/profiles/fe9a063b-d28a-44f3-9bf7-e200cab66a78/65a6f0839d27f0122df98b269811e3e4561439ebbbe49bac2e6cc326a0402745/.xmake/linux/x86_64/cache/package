@@ -1,0 +1,49 @@
+{
+    taglib = {
+        sysincludedirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/60de745a2b2b45c196c0c2a61fda8f2f/include",
+            "/home/gear/.xmake/packages/u/utfcpp/v5.0.0/60de745a2b2b45c196c0c2a61fda8f2f/include/utf8cpp",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/0d8d97c114764fb0b6be13c7a8851156/include"
+        },
+        libfiles = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc/lib/libtag_c.a",
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc/lib/libtag.a",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/0d8d97c114764fb0b6be13c7a8851156/lib/libz.a"
+        },
+        defines = "TAGLIB_STATIC",
+        installdir = "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc",
+        __enabled = true,
+        envs = {
+            PATH = {
+                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
+                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin"
+            }
+        },
+        linkdirs = {
+            "/home/gear/.xmake/packages/t/taglib/v2.3.2/5c5b9b28bddd48668ece7073677ac9bc/lib",
+            "/home/gear/.xmake/packages/z/zlib/v1.4/0d8d97c114764fb0b6be13c7a8851156/lib"
+        },
+        __requirestr = "taglib",
+        version = "v2.3.2",
+        links = {
+            "tag_c",
+            "tag",
+            "z"
+        },
+        static = true,
+        license = "LGPL-2.1"
+    },
+    libvips = {
+        __enabled = false,
+        __requirestr = "libvips"
+    },
+    nlohmann_json = {
+        sysincludedirs = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/7395a594aa9f4c4b88014b761dd862f3/include",
+        __requirestr = "nlohmann_json",
+        version = "v3.12.0",
+        installdir = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/7395a594aa9f4c4b88014b761dd862f3",
+        __enabled = true,
+        license = "MIT"
+    }
+}

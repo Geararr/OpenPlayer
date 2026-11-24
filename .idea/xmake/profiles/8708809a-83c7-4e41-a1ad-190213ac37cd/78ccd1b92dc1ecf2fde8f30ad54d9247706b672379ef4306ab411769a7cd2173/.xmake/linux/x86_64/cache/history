@@ -1,0 +1,8 @@
+{
+    cmdlines = {
+        "xmake config -y -m release -p windows -a x64",
+        "xmake config -y -m release -p windows -a x64",
+        "xmake config -y -m release -p windows -a x64",
+        "xmake config -y -m release -p windows -a x64"
+    }
+}

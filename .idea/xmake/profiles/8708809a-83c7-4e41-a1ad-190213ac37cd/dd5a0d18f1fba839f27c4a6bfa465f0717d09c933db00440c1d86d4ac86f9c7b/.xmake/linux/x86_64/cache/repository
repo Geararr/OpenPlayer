@@ -1,0 +1,6 @@
+{
+    mainurls = {
+        "https://gitlab.com/tboox/xmake-repo.git",
+        "https://github.com/xmake-io/xmake-repo.git"
+    }
+}

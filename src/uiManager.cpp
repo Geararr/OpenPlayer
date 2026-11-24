@@ -1,7 +1,7 @@
 #include "uiManager.hpp"
 #include "IconsProto.h"
 
-#include <slint/slint.h>
+#include <slint.h>
 #include <iostream>
 #include <cstdio>
 

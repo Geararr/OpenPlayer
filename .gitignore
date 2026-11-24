@@ -1,8 +1,3 @@
-cmake-build-*
-.cmake/
-imgui.ini
-EXPORT/
-assets/
-build/.xwin-cache/
-.vscode
-.idea
+/build/
+/.xmake/
+/EXPORT/
