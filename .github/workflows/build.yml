@@ -25,6 +25,7 @@ jobs:
     env:
       MAKEFLAGS: ""
       CARGO_BUILD_JOBS: "1"
+      MAKE: /usr/local/bin/make-safe
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +37,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libfontconfig1-dev
+          
+          sudo mkdir -p /usr/local/bin
+          sudo tee /usr/local/bin/make-safe << 'EOF' > /dev/null
+          #!/usr/bin/env bash
+          new_args=()
+          for arg in "$@"; do
+            if [ "$arg" = "s" ]; then
+              continue
+            fi
+            new_args+=("$arg")
+          done
+          exec /usr/bin/make "${new_args[@]}"
+          EOF
+          sudo chmod +x /usr/local/bin/make-safe
 
       - name: Setup vcpkg
         run: |
@@ -61,22 +76,6 @@ jobs:
         if: runner.os == 'Windows'
         run: Add-Content -Path $env:GITHUB_ENV -Value "VCPKG_ROOT=$env:GITHUB_WORKSPACE/vcpkg"
         shell: pwsh
-
-      - name: Fix GNU Make 4.4 Jobserver Bug (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo tee /usr/bin/cmake << 'EOF' > /dev/null
-          #!/usr/bin/env bash
-          new_args=()
-          for arg in "$@"; do
-            if [ "$arg" = "s" ]; then
-              continue
-            fi
-            new_arg+=("$arg")
-          done
-          exec /usr/bin/make "${new_args[@]}"
-          EOF
-          sudo chmod +x /usr/bin/make
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" ${{ matrix.arch && format('-A {0}', matrix.arch) || '' }}
