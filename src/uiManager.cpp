@@ -14,36 +14,11 @@ void UiManager::applyTheme() {
     const auto& config = this->configManager->getConfig();
     const auto& theme = ui->global<Theme>();
 
-    theme.set_background_main(hexToColor(config.value("background-main", "#20202b")));
-    theme.set_background_panel(hexToColor(config.value("background-panel", "#11111bcc")));
-    theme.set_border_sublte(hexToColor(config.value("border-color", "#9ab8ff")));
-    theme.set_text_primary(hexToColor(config.value("text-primary", "#d7d7f7")));
-
-    // const auto propertiesModel = ui->get_config_properties();
-    //
-    // std::vector<ConfigProperty> sortedProperties;
-    // sortedProperties.reserve(propertiesModel->row_count());
-    //
-    // for (size_t i = 0; i < propertiesModel->row_count(); ++i) {
-    //     if (auto row = propertiesModel->row_data(i)) {
-    //         std::string key(row->name);
-    //         if (config.contains(key)) {
-    //             std::string val_str = config[key].is_string()
-    //                 ? config[key].get<std::string>()
-    //                 : config[key].dump();
-    //             row->value = slint::SharedString(val_str);
-    //         }
-    //         sortedProperties.push_back(*row);
-    //     }
-    // }
-    //
-    // std::ranges::stable_partition(sortedProperties, [](const ConfigProperty& property) {
-    //     return property.color_wheel;
-    // });
-    //
-    // ui->set_config_properties(
-    //     std::make_shared<slint::VectorModel<ConfigProperty>>(std::move(sortedProperties))
-    // );
+    theme.set_background_main(hexToColor(config.value("color/background-main", "#20202b")));
+    theme.set_background_panel(hexToColor(config.value("color/background-panel", "#11111bcc")));
+    theme.set_border_sublte(hexToColor(config.value("color/border-color", "#9ab8ff")));
+    theme.set_text_primary(hexToColor(config.value("color/text-primary", "#d7d7f7")));
+    theme.set_button_normal(hexToColor(config.value("color/button-normal", "#24292C")));
 }
 
 void UiManager::reloadConfig() {
@@ -54,10 +29,12 @@ void UiManager::reloadConfig() {
     for (const auto& [key, val] : config.items()) {
         std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
 
+        const bool colorWheel = val_str.starts_with("color/");
+
         properties.push_back(ConfigProperty{
             .name = slint::SharedString(key),
             .value = slint::SharedString(val_str),
-            .color_wheel = val_str.starts_with('#')
+            .color_wheel = colorWheel
         });
     }
 

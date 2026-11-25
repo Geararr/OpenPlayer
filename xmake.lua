@@ -29,6 +29,12 @@ if is_plat("linux") then
     end
 end
 
+local function getParent(path)
+    path = path:gsub("([/\\]+)$", "")
+
+    return path:match("^(.*)[/\\]")
+end
+
 target("OpenPlayer")
     set_kind("binary")
 
@@ -59,6 +65,7 @@ target("OpenPlayer")
 
     if is_plat("linux") then
         add_packages("libvips")
+        add_syslinks("vips-cpp")
         if not is_arch("i386", "x86") then
             add_packages("tbb")
         end
@@ -73,7 +80,7 @@ target("OpenPlayer")
         local slint_pkg_installdir = slint_pkg:installdir()
 
         os.mkdir("build/generated")
-        os.exec(path.join(slint_pkg_installdir, "bin", "slint-compiler") .. " include/ui/app_window.slint --format cpp -o build/generated/app_window.h")
+        os.exec(path.join(slint_pkg_installdir, "bin", "slint-compiler") .. " include/ui/app_window.slint --format cpp --embed-resources embed-files -o build/generated/app_window.h")
     end)
 
     if is_mode("release") then
@@ -93,7 +100,11 @@ target("OpenPlayer")
         local plat = target:plat()
         local arch = target:arch()
         local mode = get_config("mode") or "release"
-        local outdir = path.join("EXPORT", plat, arch, mode)
+        local outdir = path.join("EXPORT/packaged", string.format("OpenPlayer-%s-%s-%s", plat, arch, mode))
+        local appdir = "EXPORT/appdir"
+
+        os.rm(outdir)
+        os.rm(outdir .. ".zip")
 
         os.mkdir(outdir)
         os.cp(target:targetfile(), outdir)
@@ -106,9 +117,28 @@ target("OpenPlayer")
                 os.trycp(path.join(pkg:installdir(), "lib", "*.dll"), outdir)
             end
 
-            local zipname = path.join("EXPORT", string.format("OpenPlayer-%s-%s-%s.zip", plat, arch, mode))
+            local zipname = outdir .. ".zip"
             print("Zipping Windows release...")
             os.exec(string.format("cd %s && zip -r ../../../%s .", outdir, zipname))
+        elseif plat == "linux" then
+            print("Creating Linux AppImage...")
+
+            os.rm(appdir)
+
+            os.execv(path.absolute("linuxdeploy-x86_64.AppImage"), {
+             "--appdir", appdir,
+             "--executable", path.absolute(path.join(outdir, "OpenPlayer")),
+              "--desktop-file", "assets/OpenPlayer.desktop",
+              "--icon-file", "assets/icon.svg",
+              "--output", "appimage"
+              }, {
+                envs = {
+                    OUTPUT = path.absolute(path.join(getParent(outdir), "OpenPlayer.AppImage"))
+                }
+              })
         end
+
+        os.rm(outdir)
+
         print("Export complete in " .. outdir)
     end)

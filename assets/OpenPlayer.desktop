@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=OpenPlayer
+Exec=OpenPlayer
+Icon=icon
+Type=Application
+Categories=AudioVideo;Audio;Player;
+Terminal=false

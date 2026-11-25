@@ -3,20 +3,20 @@ import { Button, VerticalBox, HorizontalBox, TabWidget, ScrollView, ListView, Pa
 export global Theme {
     in-out property <color> background-main: rgb(32, 32, 43);
     in-out property <color> background-panel: rgba(17, 17, 27, 0.8);
-    in-out property <color> border-sublte: Palette.border;
+    in-out property <color> border-sublte: rgb(154, 184, 255);
     in-out property <color> text-primary: rgb(215, 215, 247);
-    in-out property <color> button-normal: Palette.control-background;
-    out property <color> button-selected: Palette.control-background.darker(0.65);
-    out property <color> button-hover: Palette.control-background.brighter(0.65);
+    in-out property <color> button-normal: rgb(36, 41, 44);
+    out property <color> button-selected: button-normal.darker(0.3);
+    out property <color> button-hover: button-normal.brighter(0.3);
 }
 export global Default-Theme {
     in-out property <color> background-main: rgb(32, 32, 43);
     in-out property <color> background-panel: rgba(17, 17, 27, 0.8);
-    in-out property <color> border-sublte: Palette.border;
+    in-out property <color> border-sublte: rgb(154, 184, 255);
     in-out property <color> text-primary: rgb(215, 215, 247);
-    in-out property <color> button-normal: Palette.control-background;
-    out property <color> button-selected: Palette.control-background.darker(0.65);
-    out property <color> button-hover: Palette.control-background.brighter(0.65);
+    in-out property <color> button-normal: rgb(36, 41, 44);
+    out property <color> button-selected: button-normal.darker(0.3);
+    out property <color> button-hover: button-normal.brighter(0.3);
 }
 
 export global ColorUtils {

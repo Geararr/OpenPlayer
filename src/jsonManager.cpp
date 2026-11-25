@@ -45,11 +45,12 @@ void ConfigManager::loadConfig() {
             std::cout << "Empty config file\n" << "Generating basic config...\n";
 
             writeConfig({
-                {"background-main", "#20202b"},
-                {"background-panel", "#11111bcc"},
-                {"border-color", "#9ab8ff"},
-                {"text-primary", "#d7d7f7"},
-                {"music-directory", ""}
+                {"color/background-main", "#20202b"},
+                {"color/background-panel", "#11111bcc"},
+                {"color/border-color", "#9ab8ff"},
+                {"color/text-primary", "#d7d7f7"},
+                {"color/button-normal", "#24292C"},
+                {"path/music-directory", ""}
             });
             saveConfig();
         }
@@ -62,11 +63,12 @@ void ConfigManager::loadConfig() {
     else {
         std::cout << "No config file\n" << "Generating basic config...\n";
         writeConfig({
-            {"background-main", "#20202b"},
-            {"background-panel", "#11111bcc"},
-            {"border-color", "#9ab8ff"},
-            {"text-primary", "#d7d7f7"},
-            {"music-directory", ""}
+            {"color/background-main", "#20202b"},
+            {"color/background-panel", "#11111bcc"},
+            {"color/border-color", "#9ab8ff"},
+            {"color/text-primary", "#d7d7f7"},
+            {"color/button-normal", "#24292C"},
+            {"path/music-directory", ""}
         });
         saveConfig(); // create dir and load basic data
     }
@@ -92,11 +94,12 @@ json ConfigManager::copyConfig() {
 
 void ConfigManager::resetConfig() {
     writeConfig({
-        {"background-main", "#20202b"},
-        {"background-panel", "#11111bcc"},
-        {"border-color", "#9ab8ff"},
-        {"text-primary", "#d7d7f7"},
-        {"music-directory", getConfig().value("music-directory", "")}
+        {"color/background-main", "#20202b"},
+        {"color/background-panel", "#11111bcc"},
+        {"color/border-color", "#9ab8ff"},
+        {"color/text-primary", "#d7d7f7"},
+        {"color/button-normal", "#24292C"},
+        {"path/music-directory", getConfig().value("path/music-directory", "")}
     });
 }
 
