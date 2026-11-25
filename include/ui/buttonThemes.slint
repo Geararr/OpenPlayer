@@ -458,6 +458,7 @@ export component ColorWheel inherits Rectangle {
 }
 
 export component ConfigColorBlock inherits Rectangle {
+    in property <string> property-display-name: "Property-Display-Name";
     in property <string> property-name: "Property";
     in property <bool> color-wheel: true;
     in-out property <string> property-value: "Value";
@@ -473,7 +474,7 @@ export component ConfigColorBlock inherits Rectangle {
     VerticalBox {
         cross-axis-alignment: center;
         Text {
-            text: property-name;
+            text: property-display-name;
             horizontal-alignment: center;
             vertical-alignment: center;
             color: Theme.text-primary;
@@ -504,7 +505,8 @@ export component ConfigColorBlock inherits Rectangle {
                 minimum: 0.0;
                 maximum: 1.0;
                 value: 1.0;
-                changed(val) => {
+
+                changed(value) => {
                     if (self.has-focus) {
                         root.property-value = ColorUtils.to-hex(wheel.selected-color);
                         root.value-edited(root.property-value);
@@ -516,6 +518,7 @@ export component ConfigColorBlock inherits Rectangle {
 }
 
 export struct ConfigProperty {
+    display-name: string,
     name: string,
     value: string,
     color-wheel: bool
@@ -590,6 +593,7 @@ export component ConfigInterface inherits Rectangle {
                         col: Math.mod(index, cols);
                         horizontal-stretch: 1;
 
+                        property-display-name: prop.display-name;
                         property-name: prop.name;
                         property-value: prop.value;
                         color-wheel: prop.color-wheel;

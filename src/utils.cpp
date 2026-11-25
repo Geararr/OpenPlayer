@@ -267,7 +267,7 @@ std::filesystem::path SoundData::getDataDir(const DataType type) { // 0 = config
         return std::filesystem::path(path).parent_path();
     }
     else {
-        return configManager_->getConfig().value("path/music-directory", "");
+        return configManager_->getConfig().value("text/music-directory", "");
     }
 #else
     const char* homeDir = std::getenv("HOME");
@@ -283,7 +283,7 @@ std::filesystem::path SoundData::getDataDir(const DataType type) { // 0 = config
             return cachePath;
         }
         else if (type == DataType::Music) { // music
-            return configManager_->getConfig().value("path/music-directory", "");
+            return configManager_->getConfig().value("text/music-directory", "");
         }
     }
 

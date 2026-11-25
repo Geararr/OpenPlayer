@@ -4,7 +4,8 @@ set_languages("cxx20")
 
 add_rules("mode.debug", "mode.release")
 
-add_requires("nlohmann_json", "taglib")
+add_requires("nlohmann_json", "taglib", "libvips")
+add_requireconfs("libvips.glib", {version = "2.78.1", override = true})
 
 package("slint_source")
     set_sourcedir("slint_wrapper")
@@ -20,13 +21,10 @@ package("slint_source")
     end)
 package_end()
 
-add_requires("slint_source v1.18.0")
-
-if is_plat("linux") then
-    add_requires("libvips")
-    if not is_arch("i386", "x86") then
-        add_requires("tbb")
-    end
+if is_plat("windows", "mingw") then
+    add_requires("slint_source v1.18.0", {configs = {shared = true}})
+elseif is_plat("linux") then
+    add_requires("slint_source v1.18.0", {configs = {shared = false}})
 end
 
 local function getParent(path)
@@ -61,17 +59,9 @@ target("OpenPlayer")
         end
     end)
 
-    add_packages("nlohmann_json", "taglib", "slint_source")
+    add_packages("nlohmann_json", "taglib", "slint_source", "libvips")
 
-    if is_plat("linux") then
-        add_packages("libvips")
-        add_syslinks("vips-cpp")
-        if not is_arch("i386", "x86") then
-            add_packages("tbb")
-        end
-    else
-        add_defines("NO_TBB")
-    end
+    add_syslinks("vips-cpp")
 
     before_build(function (target)
         print("Compiling Slint UI files...")
@@ -86,13 +76,17 @@ target("OpenPlayer")
     if is_mode("release") then
         set_optimize("smallest")
         set_strip("all")
-        set_policy("build.optimization.lto", true)
+        if is_plat("windows", "mingw") then
+            set_policy("build.optimization.lto", false)
+        else
+	        set_policy("build.optimization.lto", true)
+	    end
     end
 
     if is_plat("windows", "mingw") then
         add_files("assets/win_icon.rc")
-        add_syslinks("winmm")
-        add_ldflags("-mwindows", "-Wl,--subsystem,windows", "-static-libgcc", "-static-libstdc++", {force = true})
+        add_syslinks("winmm", "imm32", "opengl32", "synchronization", "ntdll")
+        add_ldflags("-static-libgcc", "-static-libstdc++", {force = true})
     end
 
     after_build(function (target)
@@ -119,7 +113,10 @@ target("OpenPlayer")
 
             local zipname = outdir .. ".zip"
             print("Zipping Windows release...")
-            os.exec(string.format("cd %s && zip -r ../../../%s .", outdir, zipname))
+            local og_dir = os.curdir()
+            os.cd(outdir)
+            os.exec(string.format("zip -r ../../../%s .", zipname))
+            os.cd(og_dir)
         elseif plat == "linux" then
             print("Creating Linux AppImage...")
 
@@ -129,7 +126,7 @@ target("OpenPlayer")
              "--appdir", appdir,
              "--executable", path.absolute(path.join(outdir, "OpenPlayer")),
               "--desktop-file", "assets/OpenPlayer.desktop",
-              "--icon-file", "assets/icon.svg",
+              "--icon-file", "assets/openplayer_icon.svg",
               "--output", "appimage"
               }, {
                 envs = {

@@ -8,7 +8,6 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include <oneapi/tbb/profiling.h>
 
 void UiManager::applyTheme() {
     const auto& config = this->configManager->getConfig();
@@ -29,12 +28,16 @@ void UiManager::reloadConfig() {
     for (const auto& [key, val] : config.items()) {
         std::string val_str = val.is_string() ? val.get<std::string>() : val.dump();
 
-        const bool colorWheel = val_str.starts_with("color/");
+        const bool pType = key.starts_with("color/"); // 0 = color, 1 = text
+        std::string displayName;
+        const size_t pos = key.find('/');
+        displayName = key.substr(pos + 1, key.length());
 
         properties.push_back(ConfigProperty{
+            .display_name = slint::SharedString(displayName),
             .name = slint::SharedString(key),
             .value = slint::SharedString(val_str),
-            .color_wheel = colorWheel
+            .color_wheel = pType
         });
     }
 

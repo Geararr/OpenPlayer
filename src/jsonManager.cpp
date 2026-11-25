@@ -14,11 +14,12 @@ void ConfigManager::setConfigPath(std::filesystem::path path) {
 
 void ConfigManager::checkConfig() {
     json basicConfig = {
-        {"background-main", "#20202b"},
-        {"background-panel", "#11111bcc"},
-        {"border-color", "#9ab8ff"},
-        {"text-primary", "#d7d7f7"},
-        {"music-directory", ""}
+        {"color/background-main", "#20202b"},
+        {"color/background-panel", "#11111bcc"},
+        {"color/border-color", "#9ab8ff"},
+        {"color/text-primary", "#d7d7f7"},
+        {"color/button-normal", "#24292C"},
+        {"text/music-directory", ""}
     };
 
     std::vector<std::string> keysToRemove;
@@ -50,7 +51,7 @@ void ConfigManager::loadConfig() {
                 {"color/border-color", "#9ab8ff"},
                 {"color/text-primary", "#d7d7f7"},
                 {"color/button-normal", "#24292C"},
-                {"path/music-directory", ""}
+                {"text/music-directory", ""}
             });
             saveConfig();
         }
@@ -68,7 +69,7 @@ void ConfigManager::loadConfig() {
             {"color/border-color", "#9ab8ff"},
             {"color/text-primary", "#d7d7f7"},
             {"color/button-normal", "#24292C"},
-            {"path/music-directory", ""}
+            {"text/music-directory", ""}
         });
         saveConfig(); // create dir and load basic data
     }
@@ -99,7 +100,7 @@ void ConfigManager::resetConfig() {
         {"color/border-color", "#9ab8ff"},
         {"color/text-primary", "#d7d7f7"},
         {"color/button-normal", "#24292C"},
-        {"path/music-directory", getConfig().value("path/music-directory", "")}
+        {"text/music-directory", getConfig().value("text/music-directory", "")}
     });
 }
 
