@@ -11,7 +11,14 @@ package("slint_source")
     set_sourcedir("slint_wrapper")
 
     on_install("windows", "linux", "mingw", function (package)
-        import("package.tools.cmake").install(package, {})
+        local args = {
+            "-DRust_CARGO_TARGET=i686-pc-windows-gnu",
+            "-DRust_CARGO_TARGET=x86_64-pc-windows-gnu"
+        }
+        local acArgs = {}
+        if (is_plat("windows", "mingw") and package:is_arch("i386")) then table.insert(acArgs, args[1]) end
+        if (is_plat("windows", "mingw") and package:is_arch("x86_64")) then table.insert(acArgs, args[2]) end
+        import("package.tools.cmake").install(package, acArgs)
     end)
 
     on_load(function (package)
@@ -86,7 +93,7 @@ target("OpenPlayer")
     if is_plat("windows", "mingw") then
         add_files("assets/win_icon.rc")
         add_syslinks("winmm", "imm32", "opengl32", "synchronization", "ntdll")
-        add_ldflags("-static-libgcc", "-static-libstdc++", {force = true})
+        add_ldflags("-mwindows", "-Wl,--subsystem,windows", "-static-libgcc", "-static-libstdc++", {force = true})
     end
 
     after_build(function (target)
@@ -94,7 +101,9 @@ target("OpenPlayer")
         local plat = target:plat()
         local arch = target:arch()
         local mode = get_config("mode") or "release"
-        local outdir = path.join("EXPORT/packaged", string.format("OpenPlayer-%s-%s-%s", plat, arch, mode))
+        local platName = plat
+        if plat == "mingw" or plat == "windows" then platName = "win" end
+        local outdir = path.join("EXPORT/packaged", string.format("OpenPlayer-%s-%s-%s", platName, arch, mode))
         local appdir = "EXPORT/appdir"
 
         os.rm(outdir)

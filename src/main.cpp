@@ -3,6 +3,108 @@
 #include <vector>
 #include <exception>
 #include <cstdio>
+#include <fstream>
+#include <iostream>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <GL/gl.h>
+
+#define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
+#define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
+
+typedef HGLRC(WINAPI* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int* attribList);
+
+bool CheckOpenGLSupport(int majorVersion, int minorVersion) {
+    WNDCLASSEXW wc = { sizeof(WNDCLASSEXW) };
+    wc.style = CS_OWNDC;
+    wc.lpfnWndProc = DefWindowProcW;
+    wc.hInstance = GetModuleHandleW(nullptr);
+    wc.lpszClassName = L"DummyGLWindowClass";
+    if (!RegisterClassExW(&wc)) return false;
+
+    HWND hwnd = CreateWindowExW(
+        0, wc.lpszClassName, L"Dummy", WS_OVERLAPPEDWINDOW,
+        0, 0, 1, 1, nullptr, nullptr, wc.hInstance, nullptr
+    );
+    if (!hwnd) {
+      UnregisterClassW(wc.lpszClassName, wc.hInstance);
+      return false;
+    }
+
+    HDC hdc = GetDC(hwnd);
+    if (!hdc) {
+      DestroyWindow(hwnd);
+      UnregisterClassW(wc.lpszClassName, wc.hInstance);
+      return false;
+    }
+
+    PIXELFORMATDESCRIPTOR pfd = { sizeof(PIXELFORMATDESCRIPTOR), 1 };
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 32;
+    pfd.cDepthBits = 24;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+
+    int pf = ChoosePixelFormat(hdc, &pfd);
+    if (!pf || !SetPixelFormat(hdc, pf, &pfd)) {
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        return false;
+    }
+
+    HGLRC dummyContext = wglCreateContext(hdc);
+    if (!dummyContext || !wglMakeCurrent(hdc, dummyContext)) {
+        if (dummyContext) wglDeleteContext(dummyContext);
+        ReleaseDC(hwnd, hdc);
+        DestroyWindow(hwnd);
+        UnregisterClassW(wc.lpszClassName, wc.hInstance);
+        return false;
+    }
+
+    auto wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
+        wglGetProcAddress("wglCreateContextAttribsARB");
+
+    bool isSupported = false;
+
+    if (wglCreateContextAttribsARB != nullptr && reinterpret_cast<std::intptr_t>(wglCreateContextAttribsARB) != 1 && reinterpret_cast<std::intptr_t>(wglCreateContextAttribsARB) != 2 && reinterpret_cast<std::intptr_t>(wglCreateContextAttribsARB) != 3 && reinterpret_cast<std::intptr_t>(wglCreateContextAttribsARB) != -1) {
+        int attribs[] = {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, majorVersion,
+            WGL_CONTEXT_MINOR_VERSION_ARB, minorVersion,
+            WGL_CONTEXT_PROFILE_MASK_ARB,  WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0
+        };
+
+        HGLRC modernContext = wglCreateContextAttribsARB(hdc, nullptr, attribs);
+        if (modernContext) {
+            int result = wglMakeCurrent(hdc, modernContext);
+            if (result ) {
+              std::cout << "Supported! Version: " << glGetString(GL_VERSION) << "\n";
+              std::cout << "Renderer: " << glGetString(GL_RENDERER) << "\n";
+
+              auto glCrShaderAddress = wglGetProcAddress("glCreateShader");
+              if (glCrShaderAddress != nullptr && reinterpret_cast<std::intptr_t>(glCrShaderAddress) != 1 && reinterpret_cast<std::intptr_t>(glCrShaderAddress) != 2 && reinterpret_cast<std::intptr_t>(glCrShaderAddress) != 3 && reinterpret_cast<std::intptr_t>(glCrShaderAddress) != -1) isSupported = true;
+            }
+
+            wglMakeCurrent(nullptr, nullptr);
+            wglDeleteContext(modernContext);
+        }
+    }
+
+    wglMakeCurrent(nullptr, nullptr);
+    wglDeleteContext(dummyContext);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
+    UnregisterClassW(wc.lpszClassName, wc.hInstance);
+
+    return isSupported;
+}
+
+#endif
 
 // Project Includes
 
@@ -42,9 +144,27 @@ void soundUpdate(SoundManager *soundManager) {
 int main(int argc, char* argv[]) {
     // setup rendering stuff
 #ifdef _WIN32
-    _putenv_s("SLINT_BACKEND", "winit-femtovg");
+    const std::filesystem::path softwareFlag = SoundData::getDataDir(DataType::Config) / "softwareRendering.flag";
+    const std::filesystem::path hardwareFlag = SoundData::getDataDir(DataType::Config) / "hardwareRendering.flag";
+
+    if (std::filesystem::exists(softwareFlag)) {
+      _putenv_s("SLINT_BACKEND", "winit-software");
+    }
+    else if (std::filesystem::exists(hardwareFlag)) {
+      _putenv_s("SLINT_BACKEND", "winit-femtovg");
+    }
+    else { // if no flag the commence the check
+      if (CheckOpenGLSupport(3, 3)) {
+        _putenv_s("SLINT_BACKEND", "winit-femtovg");
+        std::ofstream(hardwareFlag).close();
+      }
+      else {
+        _putenv_s("SLINT_BACKEND", "winit-software");
+        std::ofstream(softwareFlag).close();
+      }
+    }
 #else
-    setenv("SLINT_BACKEND", "winit-skia", 1);
+    setenv("SLINT_BACKEND", "winit-femtovg", 1);
 #endif
 
   // VIPS SETUP
