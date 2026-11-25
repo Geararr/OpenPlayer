@@ -3,9 +3,9 @@ var win_x64_button = document.getElementById("windows-x64-download")
 var win_x86_button = document.getElementById("windows-x86-download")
 
 var download_links = [
-    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer_Linux.zip",
-    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer_Win_x64.zip",
-    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer_Win_x86.zip"
+    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer.AppImage",
+    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer-win-x86_64-release.zip",
+    "https://github.com/Geararr/OpenPlayer/releases/latest/download/OpenPlayer-win-i386-release.zip"
 ]
 // 0 = linux, 1 = win_x64, 2 = win_x86
 

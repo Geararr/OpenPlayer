@@ -82,6 +82,21 @@ body {
     text-align: center;
 }
 
+.link-container {
+    text-align: center;
+    padding-top: 10px;
+}
+.link {
+    background-image: linear-gradient(to right, #33B9E6, #04F090);
+    background-clip: text;
+    -webkit-background-clip: text;
+
+    font-family: "JetBrains Mono";
+    color: transparent;
+    font-size: 18px;
+    display: inline-block;
+}
+
 .download-buttons {
     display: flex;
     justify-content: center;
@@ -112,8 +127,8 @@ body {
 }
 .download-buttons .d-button img {
     display: block;
-    height: 60px;
-    width: 60px;
+    height: 75px;
+    width: 75px;
 
     filter:
         drop-shadow(-3px 0 8px rgba(51, 185, 230, 0.35))
