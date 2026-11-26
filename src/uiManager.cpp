@@ -159,6 +159,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
 
     // ColorUtils
     ui->global<ColorUtils>().on_to_hex(colorToHex);
+    ui->global<ColorUtils>().on_from_hex(hexToColor);
 }
 
 slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {

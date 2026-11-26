@@ -293,8 +293,8 @@ std::filesystem::path SoundData::getDataDir(const DataType type) { // 0 = config
 
 // ColorUtils
 slint::SharedString colorToHex(const slint::Color color) {
-    char hex[8];
-    std::snprintf(hex, sizeof(hex), "#%02x%02x%02x", color.red(), color.green(), color.blue());
+    char hex[10];
+    std::snprintf(hex, sizeof(hex), "#%02x%02x%02x%02x", color.red(), color.green(), color.blue(), color.alpha());
     return {hex};
 }
 
@@ -330,5 +330,6 @@ slint::Color hexToColor(std::string_view hex) {
         );
     }
 
+    std::cerr << "Invalid color type: " << hex << std::endl;
     return {};
 }

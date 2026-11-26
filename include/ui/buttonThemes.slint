@@ -102,12 +102,14 @@ export component ScrollableSelectionBox inherits Rectangle {
     in property <length> max-popup-height: 200px;
     in property <length> font-size: 16px;
 
+    in property <bool> selected;
+
     callback select(int, string);
 
     height: 36px;
     border-width: 1px;
     border-radius: 4px;
-    background: touch.has-hover ? Theme.button-hover : Theme.button-normal;
+    background: selected ? Theme.button-selected : (touch.has-hover ? Theme.button-hover : Theme.button-normal);
 
     touch := TouchArea {
         clicked => { popup.show(); }
@@ -200,20 +202,21 @@ export component LeftInterface inherits Rectangle {
                 horizontal-alignment: center;
             }
 
-            CustomButton {
+            CustomButton { // config = 0
                 text: "\u{e615} Config";
-                selected: root.current-tab == 1;
+                selected: root.current-tab == 0;
 
                 clicked => {
-                    root.set-tab(1);
+                    root.set-tab(0);
                 }
             }
-            ScrollableSelectionBox {
+            ScrollableSelectionBox { // playlists/song = 1
                 button-text: "▼ Playlists";
                 model: playlists;
+                selected: current-tab == 1;
 
                 select(idx, text) => {
-                    root.set-tab(0);
+                    root.set-tab(1);
                     root.playlist_set(idx);
                 }
             }
@@ -341,7 +344,7 @@ export component SoundsInterface inherits Rectangle {
 
             scroll := ScrollView {
                 width: 100%;
-                height: 100%;
+                height: parent.height - 8px;
 
                 VerticalLayout {
                     width: scroll.visible-width;
@@ -352,6 +355,8 @@ export component SoundsInterface inherits Rectangle {
                     for pending_song[index] in pendingSongs : PendingSongButton {
                         art: pending-song.image;
                         text: pending-song.title;
+
+                        selected: current-sound == pending-song.title;
 
                         clicked => {
                             root.song-set(index);
@@ -366,9 +371,10 @@ export component SoundsInterface inherits Rectangle {
 export component ColorWheel inherits Rectangle {
     in-out property <angle> hue: 0deg;
     in-out property <float> saturation: 1.0;
+    in-out property <float> alpha: 1.0;
     in-out property <float> value: 1.0;
     in property <color> external-color;
-    out property <color> selected-color: Colors.hsv(root.hue / 1deg, root.saturation, root.value);
+    out property <color> selected-color: Colors.hsv(root.hue / 1deg, root.saturation, root.value).with-alpha(alpha);
 
     callback set-color(color);
 
@@ -377,6 +383,7 @@ export component ColorWheel inherits Rectangle {
         root.hue = hsv.hue * 1deg;
         root.saturation = hsv.saturation;
         root.value = hsv.value;
+        root.alpha = hsv.alpha;
     }
 
     init => {
@@ -395,13 +402,14 @@ export component ColorWheel inherits Rectangle {
         height: 100%;
         border-radius: self.width / 2;
         background: @conic-gradient(
-            #ff0000 0deg,
-            #ffff00 60deg,
-            #00ff00 120deg,
-            #00ffff 180deg,
-            #0000ff 240deg,
-            #ff00ff 300deg,
-            #ff0000 360deg
+            #80ff00 0deg,
+            #00ff00 30deg,
+            #00ffff 90deg,
+            #0000ff 150deg,
+            #ff00ff 210deg,
+            #ff0000 270deg,
+            #ffff00 330deg,
+            #80ff00 360deg
         );
 
         Rectangle {
@@ -464,7 +472,7 @@ export component ConfigColorBlock inherits Rectangle {
     in-out property <string> property-value: "Value";
     callback value-edited(string);
 
-    height: color-wheel ? 220px : 75px;
+    height: color-wheel ? 250px : 75px;
     width: 175px;
 
     border-width: 1px;
@@ -494,6 +502,7 @@ export component ConfigColorBlock inherits Rectangle {
             wheel := ColorWheel {
                 external-color: ColorUtils.from-hex(root.property-value);
                 value <=> brightness-slider.value;
+                alpha <=> alpha-slider.value;
 
                 set-color(color) => {
                     root.property-value = ColorUtils.to-hex(color);
@@ -502,6 +511,18 @@ export component ConfigColorBlock inherits Rectangle {
             }
 
             brightness-slider := Slider {
+                minimum: 0.0;
+                maximum: 1.0;
+                value: 1.0;
+
+                changed(value) => {
+                    if (self.has-focus) {
+                        root.property-value = ColorUtils.to-hex(wheel.selected-color);
+                        root.value-edited(root.property-value);
+                    }
+                }
+            }
+            alpha-slider := Slider {
                 minimum: 0.0;
                 maximum: 1.0;
                 value: 1.0;
@@ -614,7 +635,7 @@ export component ContentArea inherits Rectangle {
 
     in-out property <[ConfigProperty]> config-properties;
 
-    in property <int> current-tab: 0; // 0 = default, 1 = Settings
+    in property <int> current-tab: 0; // 0 = config, 1 = playlist
 
     in property <string> current-sound: "Loading..."; // CurrentImage {
     in property <image> current-image; // Current song image
@@ -641,7 +662,25 @@ export component ContentArea inherits Rectangle {
     callback save-theme();
     callback reload();
 
-    if root.current-tab == 0 : SoundsInterface {
+    if root.current-tab == 0 : ConfigInterface {
+        width: 100%; height: 100%;
+
+        config-properties: config-properties;
+
+        config-changed(name, value) => {
+            config-changed(name, value); // check what changed on ui and set the change if valid
+        }
+        reset-theme => {
+            root.reset-theme();
+        }
+        save-theme => {
+            root.save-theme();
+        }
+        reload => {
+            root.reload();
+        }
+    }
+    if root.current-tab == 1  : SoundsInterface {
         width: 100%; height: 100%;
 
         current-image: current-image;
@@ -668,25 +707,6 @@ export component ContentArea inherits Rectangle {
 
         volume-changed(val) => {
             root.volume-changed(val)
-        }
-    }
-
-    if root.current-tab == 1 : ConfigInterface {
-        width: 100%; height: 100%;
-
-        config-properties: config-properties;
-
-        config-changed(name, value) => {
-            config-changed(name, value); // check what changed on ui and set the change if valid
-        }
-        reset-theme => {
-            root.reset-theme();
-        }
-        save-theme => {
-            root.save-theme();
-        }
-        reload => {
-            root.reload();
         }
     }
 }

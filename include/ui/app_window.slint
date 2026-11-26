@@ -5,7 +5,7 @@ export { Theme, ColorUtils, Default-Theme }
 export component OpenPlayerUI inherits Window {
     default-font-family: "0xProto Nerd Font";
 
-    in-out property <int> current-tab: 1; // 0 = default, 1 = playlists, 2 = config
+    in-out property <int> current-tab: 0; // 0 = config, 1 = playlist
 
     in-out property <string> current-sound: "Loading..."; // CurrentImage {
     in-out property <image> current-image; // Current song image
