@@ -26,11 +26,11 @@ demo_video_button.addEventListener("click", () => {
     if (!demo_vid_clicked) {
         demo_video_button.innerHTML = `
         <iframe 
-            width="1199" 
-            height="674" 
-            src="https://www.youtube.com/embed/KmIlSC3aBm8" 
-            title="OpenPlayer v6.0.0 Release Demo" 
-            frameborder="0"
+            width="1301" 
+            height="732" 
+            src="https://www.youtube.com/embed/6iwE7MpFdJg" 
+            title="OpenPlayer v6.0.0 [FIX] Release Demo" 
+            frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
             referrerpolicy="strict-origin-when-cross-origin" 
             allowfullscreen>
