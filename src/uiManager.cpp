@@ -60,13 +60,17 @@ void UiManager::reloadPlaylists(SoundManager* soundManager) {
     ui->set_playlists(playlist_model);
 }
 
-UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager) : ui(OpenPlayerUI::create()) {
+UiManager::UiManager(SoundManager* soundManager, ConfigManager* configManager, Discover::DiscoverManager* discoverManager) : ui(OpenPlayerUI::create()) {
 
     // CONFIG SETUP
     this->configManager = configManager;
     this->configManager->loadConfig();
 
     reloadConfig();
+
+    // Api setup
+    discoverManager->createUserApiUrl();
+    discoverManager->testPing();
 
     // SONGS SETUP
     ui->set_current_sound("No song selected...");
@@ -96,7 +100,7 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
                 ui->set_is_playing(false);
             }
             else { // paused
-                event.eventId = PlaySound;
+                event.eventId = PlaySound_OP;
                 ui->set_toggle_button(ICON_PAUSE);
                 ui->set_is_playing(true);
             }
@@ -160,6 +164,40 @@ void UiManager::setupEvents(EventManager* eventManager, SoundManager* soundManag
     // ColorUtils
     ui->global<ColorUtils>().on_to_hex(colorToHex);
     ui->global<ColorUtils>().on_from_hex(hexToColor);
+
+    // DISCOVER TAB
+    ui->on_text_edited([eventManager](const slint::SharedString& text) {
+        if (!text.empty()) {
+            eventManager->fireEvent({
+                .eventData = std::string(text),
+                .eventTarget = WebTarget,
+                .eventId = GetSuggestions
+            });
+        }
+    });
+    ui->on_text_submitted([this, ui_weak, eventManager](const slint::SharedString& text) {
+        if (!text.empty()) {
+
+            eventManager->fireEvent({
+                .eventData = std::string(text),
+                .eventTarget = WebTarget,
+                .eventId = Search
+            });
+
+            if (lastSearched != std::string(text)) {
+
+                lastSearched = std::string(text);
+
+                if (const auto ui_strong = ui_weak.lock()) {
+                    const auto& ui = *ui_strong;
+
+                    ui->set_is_searching(true);
+                    const auto foundTracks = std::make_shared<slint::VectorModel<DiscoverSongStruct>>();
+                    ui->set_found_songs(foundTracks);
+                }
+            }
+        }
+    });
 }
 
 slint::ComponentWeakHandle<OpenPlayerUI> UiManager::getWeakHandle() {
@@ -294,6 +332,84 @@ void UiManager::pollEvents(const Event event, EventManager* eventManager,SoundMa
             slint::invoke_from_event_loop([this, ui_weak, soundManager]() {
                 progressCheckTimer.stop();
             });
+        } break;
+
+        case Search: {
+            if (const auto* tracks = std::get_if<std::vector<JamendoTrack>>(&event.eventData)) {
+                auto ui_weak = getWeakHandle();
+
+                if (tracks->empty()) {
+                    slint::invoke_from_event_loop([ui_weak]() {
+                        if (const auto ui_strong_opt = ui_weak.lock()) {
+                            const auto& ui_strong = *ui_strong_opt;
+
+                            ui_strong->set_is_searching(false);
+
+                            const auto foundTracks = std::make_shared<slint::VectorModel<DiscoverSongStruct>>();
+                            ui_strong->set_found_songs(foundTracks);
+                        }
+                    });
+                }
+                else {
+                    struct TrackSnapshot {
+                        std::string name;
+                        std::string id;
+                        slint::Image image;
+                    };
+
+                    std::vector<TrackSnapshot> trackObjs;
+                    trackObjs.reserve(tracks->size());
+
+                    for (const auto& track : *tracks) {
+
+                        slint::Image artImage;
+
+                        auto newTempImg = Download::TempImage(track.imageUrl, 64);
+                        artImage = newTempImg.get();
+
+                        trackObjs.push_back({
+                            .name = track.name,
+                            .id = track.id,
+                            .image = artImage
+                        });
+                    }
+
+                    slint::invoke_from_event_loop([ui_weak, tracks = std::move(trackObjs)]() {
+                        if (const auto ui_strong_opt = ui_weak.lock()) {
+                            const auto& ui_strong = *ui_strong_opt;
+
+                            // load all song results
+                            const auto foundTracks = std::make_shared<slint::VectorModel<DiscoverSongStruct>>();
+                            for (const auto&[name, id, image] : tracks) {
+                                foundTracks->push_back(DiscoverSongStruct{
+                                    .name = slint::SharedString(name),
+                                    .id = slint::SharedString(id),
+                                    .art = image
+                                });
+                            }
+                            ui_strong->set_is_searching(false);
+                            ui_strong->set_found_songs(foundTracks);
+                        }
+                    });
+                }
+            }
+            else {
+                std::cerr << "Event data did not hold std::vector<JamendoTrack>\n";
+            }
+        } break;
+
+        case GetSuggestions: {
+            if (const auto* tracks = std::get_if<std::vector<std::string>>(&event.eventData)) {
+                if (tracks->empty()) {
+                    std::cout << "No tracks found\n";
+                }
+                else {
+                    std::cout << tracks->front() << '\n';
+                }
+            }
+            else {
+                std::cerr << "Event data did not hold std::vector<std::string>\n";
+            }
         } break;
     }
 }

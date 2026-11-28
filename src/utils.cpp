@@ -7,6 +7,8 @@
 #include <malloc.h>
 
 #include <cstring>
+#include <cpr/api.h>
+#include <cpr/response.h>
 
 using PixelBuffer = slint::SharedPixelBuffer<slint::Rgba8Pixel>;
 using AudioCoverBytes = std::vector<uint8_t>;
@@ -332,4 +334,41 @@ slint::Color hexToColor(std::string_view hex) {
 
     std::cerr << "Invalid color type: " << hex << std::endl;
     return {};
+}
+
+Download::TempImage::TempImage(const std::string &url, const int maxDimension) {
+
+    if (url.empty()) {
+        image_ = CreateNoiseImage("baseNoiseImg");
+    }
+    else {
+        cpr::Response response = cpr::Get(cpr::Url{url}, cpr::Timeout{std::chrono::seconds{3}});
+
+        if (response.status_code != 200) {
+            std::cout << "Failed to get file\n";
+            image_ = CreateNoiseImage("baseNoiseImg");
+        }
+        else {
+            try {
+                vips::VImage image = vips::VImage::new_from_buffer(response.text.data(), response.text.size(), "")
+                    .thumbnail_image(
+                        maxDimension,
+                        vips::VImage::option()
+                            ->set("height", maxDimension)
+                            ->set("size", VIPS_SIZE_DOWN)
+                    );
+
+                const slint::SharedPixelBuffer<slint::Rgba8Pixel> pixelBuffer = VImageToSlintBuffer(image);
+
+                image_ = slint::Image(pixelBuffer);
+            } catch (const vips::VError& e) {
+                std::cerr << "VIPS_ERROR -> " << e.what() << '\n';
+                image_ = CreateNoiseImage("baseNoiseImg");
+            }
+        }
+    }
+}
+
+slint::Image& Download::TempImage::get() {
+    return image_;
 }

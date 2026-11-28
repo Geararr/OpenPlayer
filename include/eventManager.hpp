@@ -9,7 +9,14 @@
 #include "EVENTS.h"
 
 struct Event {
-    std::variant<int, float> eventData;
+    std::variant<int,
+        float,
+        std::string,
+        JamendoTrack,
+        std::vector<JamendoTrack>,
+        std::vector<std::string>
+    > eventData;
+
     int eventTarget;
     int eventId;
 };

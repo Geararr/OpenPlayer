@@ -19,7 +19,8 @@ void ConfigManager::checkConfig() {
         {"color/border-color", "#9ab8ff"},
         {"color/text-primary", "#d7d7f7"},
         {"color/button-normal", "#24292C"},
-        {"text/music-directory", ""}
+        {"text/music-directory", ""},
+        {"text/jamendo-client-id", ""}
     };
 
     std::vector<std::string> keysToRemove;
@@ -51,7 +52,8 @@ void ConfigManager::loadConfig() {
                 {"color/border-color", "#9ab8ff"},
                 {"color/text-primary", "#d7d7f7"},
                 {"color/button-normal", "#24292C"},
-                {"text/music-directory", ""}
+                {"text/music-directory", ""},
+                {"text/jamendo-client-id", ""}
             });
             saveConfig();
         }
@@ -69,7 +71,8 @@ void ConfigManager::loadConfig() {
             {"color/border-color", "#9ab8ff"},
             {"color/text-primary", "#d7d7f7"},
             {"color/button-normal", "#24292C"},
-            {"text/music-directory", ""}
+            {"text/music-directory", ""},
+            {"text/jamendo-client-id", ""}
         });
         saveConfig(); // create dir and load basic data
     }
@@ -100,7 +103,8 @@ void ConfigManager::resetConfig() {
         {"color/border-color", "#9ab8ff"},
         {"color/text-primary", "#d7d7f7"},
         {"color/button-normal", "#24292C"},
-        {"text/music-directory", getConfig().value("text/music-directory", "")}
+        {"text/music-directory", getConfig().value("text/music-directory", "")},
+        {"text/jamendo-client-id", getConfig().value("text/jamendo-client-id", "")}
     });
 }
 

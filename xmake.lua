@@ -4,7 +4,7 @@ set_languages("cxx20")
 
 add_rules("mode.debug", "mode.release")
 
-add_requires("nlohmann_json", "taglib", "libvips")
+add_requires("nlohmann_json", "taglib", "libvips", "cpr")
 add_requireconfs("libvips.glib", {version = "2.78.1", override = true})
 
 package("slint_source")
@@ -49,6 +49,7 @@ target("OpenPlayer")
         "src/soundManager.cpp",
         "src/utils.cpp",
         "src/eventManager.cpp",
+        "src/discover.cpp",
         "src/jsonManager.cpp",
         "src/miniaudio_impl.cpp"
     )
@@ -66,7 +67,7 @@ target("OpenPlayer")
         end
     end)
 
-    add_packages("nlohmann_json", "taglib", "slint_source", "libvips")
+    add_packages("nlohmann_json", "taglib", "slint_source", "libvips", "cpr")
 
     add_syslinks("vips-cpp")
 

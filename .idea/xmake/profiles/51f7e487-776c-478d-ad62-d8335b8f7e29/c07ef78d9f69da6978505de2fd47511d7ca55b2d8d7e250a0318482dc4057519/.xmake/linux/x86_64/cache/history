@@ -11,6 +11,9 @@
         "xmake config -y -m debug -p linux -a x86_64",
         "xmake build -y",
         "xmake project -k compile_commands",
-        "xmake config -y -m debug -p linux -a x86_64"
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake config -y -m debug -p linux -a x86_64",
+        "xmake project -k compile_commands",
+        "xmake lua /usr/share/xmake/modules/private/utils/statistics.lua"
     }
 }

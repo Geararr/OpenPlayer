@@ -5,9 +5,10 @@
 enum EventTarget {
     SoundTarget,
     UiTarget,
+    WebTarget
 };
 enum EventId {
-    PlaySound,
+    PlaySound_OP,
     PauseSound,
     SetVolume,
     SelectSound,
@@ -15,5 +16,17 @@ enum EventId {
     PreviousSound,
     ReloadPlaylist,
     StartProgressTimer,
-    StopProgressTimer
+    StopProgressTimer,
+    // Web events
+    Search,
+    GetSuggestions
+};
+
+// Other structs
+struct JamendoTrack {
+    std::string id;
+    std::string name;
+    int duration = 0;
+    std::string downloadUrl;
+    std::string imageUrl;
 };

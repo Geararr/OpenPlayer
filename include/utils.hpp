@@ -22,6 +22,7 @@
 #include "jsonManager.hpp"
 
 #include <filesystem>
+#include <curl/curl.h>
 
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -72,6 +73,17 @@ namespace SoundData {
     std::vector<uint8_t> GetAudioCoverBytes(const std::string& assetKey, const std::filesystem::path& filePath);
     slint::Image GetImageFromBytes(const std::string& assetKey, int maxDimension, const std::filesystem::path& filePath);
     std::filesystem::path getDataDir(DataType type);
+}
+
+namespace Download {
+    class TempImage {
+    public:
+        TempImage(const std::string& url, int maxDimension);
+        slint::Image& get();
+
+    private:
+        slint::Image image_;
+    };
 }
 
 slint::SharedString colorToHex(slint::Color color);

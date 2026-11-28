@@ -1,5 +1,5 @@
 import "../../assets/fonts/baseFont.ttf";
-import { SoundsInterface, LeftInterface, ContentArea, PendingSong, Theme, Default-Theme, ConfigProperty, ColorUtils } from "buttonThemes.slint";
+import { SoundsInterface, LeftInterface, DiscoverInterface, ContentArea, PendingSong, DiscoverSongStruct, Theme, Default-Theme, ConfigProperty, ColorUtils } from "buttonThemes.slint";
 export { Theme, ColorUtils, Default-Theme }
 
 export component OpenPlayerUI inherits Window {
@@ -47,6 +47,20 @@ export component OpenPlayerUI inherits Window {
     callback save-theme();
     callback reload();
 
+    // search discover tab
+    out property <string> current-text;
+    in property <[string]> suggestions;
+    out property <string> final-text;
+    out property <length> discover-tab-height;
+
+    in property <[DiscoverSongStruct]> found-songs;
+    in property <bool> is-searching;
+
+    callback text-edited(string);
+    callback text-submitted(string);
+    callback download-song(int); // id of song
+    // ----------------------------------
+
     HorizontalLayout {
         spacing: 10px;
         padding: 10px;
@@ -76,6 +90,9 @@ export component OpenPlayerUI inherits Window {
             total-time-text: total-time-text;
             volume <=> root.volume;
 
+            found-songs: found-songs;
+            is-searching: is-searching;
+
             config-properties: config-properties;
 
             config-changed(name, value) => {
@@ -96,6 +113,9 @@ export component OpenPlayerUI inherits Window {
             toggle-music => { root.toggle-music(); }
             song_set(index) => { root.song_set(index); }
             volume-changed(val) => { root.volume-changed(val); }
+            text-edited(new-text) => { root.text-edited(new-text); }
+            text-submitted(new-text) => { root.text-submitted(new-text); }
+            download-song(id) => { root.download-song(id); }
         }
     }
 }

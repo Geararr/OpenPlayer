@@ -4,6 +4,7 @@
 #include <slint/slint.h>
 
 #include "jsonManager.hpp"
+#include "discover.hpp"
 
 #include "soundManager.hpp"
 #include "eventManager.hpp"
@@ -16,10 +17,12 @@ class UiManager {
 
         ConfigManager* configManager;
 
+        std::string lastSearched;
+
     public:
         void applyTheme();
 
-        UiManager(SoundManager* soundManager, ConfigManager* configManager); // setup ui
+        UiManager(SoundManager* soundManager, ConfigManager* configManager, Discover::DiscoverManager* discoverManager); // setup ui
         slint::ComponentWeakHandle<OpenPlayerUI> getWeakHandle();
         void setupEvents(EventManager* eventManager, SoundManager* soundManager);
         void reloadConfig();

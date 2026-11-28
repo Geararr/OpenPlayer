@@ -435,7 +435,7 @@ void SoundManager::pollEvents(const Event event)
 
     switch (event.eventId)
     {
-        case PlaySound: // play song
+        case PlaySound_OP: // play song
             playSound(); break;
         case PauseSound: // pause sound
             pauseSound(); break;

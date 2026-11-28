@@ -113,10 +113,11 @@ bool CheckOpenGLSupport(int majorVersion, int minorVersion) {
 #include "soundManager.hpp"
 #include "uiManager.hpp"
 #include "jsonManager.hpp"
+#include "discover.hpp"
 
 std::atomic<bool> programEnd(false);
 
-void eventUpdate(SoundManager *soundManager, UiManager *uiManager, EventManager *eventManager) {
+void eventUpdate(SoundManager *soundManager, UiManager *uiManager, Discover::DiscoverManager *discoverManager, EventManager *eventManager) {
 
   while (!programEnd.load()) {
     const Event updateEvent = eventManager->getEvent();
@@ -125,6 +126,7 @@ void eventUpdate(SoundManager *soundManager, UiManager *uiManager, EventManager 
       switch (updateEvent.eventTarget) {
         case SoundTarget: soundManager->pollEvents(updateEvent); break;
         case UiTarget: uiManager->pollEvents(updateEvent, eventManager, soundManager); break;
+        case WebTarget: discoverManager->addTask(updateEvent);
       }
     }
   }
@@ -139,6 +141,13 @@ void soundUpdate(SoundManager *soundManager) {
     soundManager->soundThreadUpdate(&programEnd);
   }
   std::cout << "Sound thread end\n";
+}
+
+void discoverUpdate(Discover::DiscoverManager *discoverManager) {
+  while (!programEnd.load()) {
+    discoverManager->discoverThreadUpdate(&programEnd);
+  }
+  std::cout << "Web thread end\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -211,11 +220,16 @@ int main(int argc, char* argv[]) {
 
   // STARTUP END
 
-  UiManager uiManager(&soundManager, &configManager); // load config in uiManager
+  Discover::DiscoverManager discoverManager;
+
+  discoverManager.setManagers(&configManager, &eventManager);
+
+  UiManager uiManager(&soundManager, &configManager, &discoverManager); // load config in uiManager
   uiManager.setupEvents(&eventManager, &soundManager);
 
   std::thread soundThread(soundUpdate, &soundManager);
-  std::thread eventThread(eventUpdate, &soundManager, &uiManager, &eventManager);
+  std::thread eventThread(eventUpdate, &soundManager, &uiManager, &discoverManager, &eventManager);
+  std::thread webThread(discoverUpdate, &discoverManager);
 
   uiManager.Run();
 
@@ -224,12 +238,16 @@ int main(int argc, char* argv[]) {
 
   soundManager.END();
   eventManager.END();
+  discoverManager.END();
 
   if (eventThread.joinable()) {
     eventThread.join();
   }
   if (soundThread.joinable()) {
     soundThread.join();
+  }
+  if (webThread.joinable()) {
+    webThread.join();
   }
 
   soundManager.unloadSound(); // make sure no sounds are loaded

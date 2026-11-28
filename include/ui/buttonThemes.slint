@@ -210,13 +210,21 @@ export component LeftInterface inherits Rectangle {
                     root.set-tab(0);
                 }
             }
-            ScrollableSelectionBox { // playlists/song = 1
+            CustomButton { // discover = 1
+                text: "\u{f002} Discover";
+                selected: root.current-tab == 1;
+
+                clicked => {
+                    root.set-tab(1);
+                }
+            }
+            ScrollableSelectionBox { // playlists/song = 2
                 button-text: "▼ Playlists";
                 model: playlists;
-                selected: current-tab == 1;
+                selected: current-tab == 2;
 
                 select(idx, text) => {
-                    root.set-tab(1);
+                    root.set-tab(2);
                     root.playlist_set(idx);
                 }
             }
@@ -629,13 +637,178 @@ export component ConfigInterface inherits Rectangle {
     }
 }
 
+export struct DiscoverSongStruct {
+    name: string,
+    id: string,
+    art: image
+}
+
+export component DiscoverSong inherits Rectangle {
+    in property <image> art;
+    in property <string> name;
+    in property <string> id;
+    in property <color> text-color: Theme.text-primary;
+    in property <length> font-size: 14px;
+
+    callback download-song(int);
+
+    height: 85px;
+    min-width: 0px;
+    border-radius: 4px;
+    background: Theme.button-normal;
+
+    touch := TouchArea {}
+
+    HorizontalLayout {
+        padding: 8px;
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+
+        Image {
+            width: 65px;
+            height: 65px;
+            source: root.art;
+            image-fit: contain;
+            horizontal-stretch: 0;
+            vertical-alignment: center;
+        }
+
+        Text {
+            min-width: 0px;
+            preferred-width: 0px;
+            text: root.name;
+            font-size: root.font-size;
+            color: root.text-color;
+            vertical-alignment: center;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+    }
+}
+
+export component DiscoverInterface inherits Rectangle {
+    min-width: 0px;
+    max-width: 10000px;
+    background: Theme.background-panel;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: Theme.border-sublte;
+
+    in property <[DiscoverSongStruct]> found-songs;
+
+    out property <string> current-text; // sent every text edit, actually only processed every 400ms
+    in property <[string]> suggestions; // recieved when currentText is processed
+
+    in-out property <length> discover-tab-height: sc-view.visible-height; // used for lazy loading
+
+    in property <bool> is-searching;
+
+    callback text-edited(string);
+    callback text-submitted(string);
+
+    callback download-song(int);
+
+    changed current-text => {
+        root.text-edited(current-text);
+    }
+
+    sc-view := ScrollView {
+        width: 100%;
+        height: 100%;
+
+        property <int> cols: max(1, Math.floor((self.visible-width  - 16px + 10px) / (200px + 10px)));
+
+        VerticalLayout {
+            width: sc-view.visible-width;
+            padding: 8px;
+            spacing: 8px;
+
+            Rectangle {
+                width: 100%;
+                height: 32px;
+                border-radius: 6px;
+                background: Theme.button-normal;
+
+                TouchArea {
+                    clicked => { search-input.focus(); }
+                }
+
+                HorizontalLayout {
+                    width: 100%;
+                    height: 100%;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 8px;
+
+                    Text {
+                        text: "\u{f0387}";
+                        vertical-alignment: center;
+                        color: Theme.text-primary;
+                        horizontal-stretch: 0;
+                    }
+
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        min-width: 0px;
+                        preferred-width: 0px;
+                        clip: true;
+                        background: transparent;
+
+                        search-input := TextInput {
+                            width: 100%;
+                            height: 100%;
+                            horizontal-alignment: left;
+                            vertical-alignment: center;
+                            color: Theme.text-primary;
+                            text <=> root.current-text;
+                            single-line: true;
+
+                            accepted => {
+                                 self.clear-focus();
+                                 root.text-submitted(root.current-text);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (found-songs.length > 0) : GridLayout {
+                width: 100%;
+                spacing: 10px;
+
+                for song[index] in found-songs : DiscoverSong {
+                    row: Math.floor(index / sc-view.cols);
+                    col: Math.mod(index, sc-view.cols);
+                    horizontal-stretch: 1;
+
+                    name: song.name;
+                    id: song.id;
+                    art: song.art;
+                }
+            }
+            if (found-songs.length == 0 && !is-searching) : Text {
+                horizontal-alignment: center;
+                color: Theme.text-primary;
+                text: "No results...";
+            }
+            if (is-searching) : Text {
+                text: ("\u{f002} Searching" + (mod(floor(animation-tick() / 400ms), 4) == 0 ? "" : (mod(floor(animation-tick() / 400ms), 4) == 1 ? "." : (mod(floor(animation-tick() / 400ms), 4) == 2 ? ".." : "..."))));
+                color: Theme.text-primary.brighter(0.5 + 0.5 * sin(animation-tick() / 600ms * 1rad));
+
+                horizontal-alignment: center;
+            }
+        }
+    }
+}
+
 export component ContentArea inherits Rectangle {
     min-width: 0px;
     max-width: 100000px;
 
     in-out property <[ConfigProperty]> config-properties;
 
-    in property <int> current-tab: 0; // 0 = config, 1 = playlist
+    in property <int> current-tab: 0; // 0 = config, 1 = discover, 2 = playlist
 
     in property <string> current-sound: "Loading..."; // CurrentImage {
     in property <image> current-image; // Current song image
@@ -649,6 +822,20 @@ export component ContentArea inherits Rectangle {
 
     in property <[string]> playlists;
     in property <[PendingSong]> pendingSongs: [];
+
+    // search discover tab
+    out property <string> current-text;
+    in property <[string]> suggestions;
+    out property <string> final-text;
+    out property <length> discover-tab-height;
+
+    in property <[DiscoverSongStruct]> found-songs;
+    in property <bool> is-searching;
+
+    callback text-edited(string);
+    callback text-submitted(string);
+    callback download-song(int);
+    // ----------------------------------
 
     callback playlist_set(int);
     callback song_set(int);
@@ -680,7 +867,27 @@ export component ContentArea inherits Rectangle {
             root.reload();
         }
     }
-    if root.current-tab == 1  : SoundsInterface {
+    if root.current-tab == 1 : DiscoverInterface {
+        width: 100%;
+        height: 100%;
+
+        suggestions: suggestions;
+        discover-tab-height: discover-tab-height;
+
+        found-songs: found-songs;
+        is-searching: is-searching;
+
+        text-edited(new-text) => {
+            root.text-edited(new-text);
+        }
+        text-submitted(new-text) => {
+            root.text-submitted(new-text);
+        }
+        download-song(id) => {
+            root.download-song(id);
+        }
+    }
+    if root.current-tab == 2  : SoundsInterface {
         width: 100%; height: 100%;
 
         current-image: current-image;

@@ -1,26 +1,65 @@
 {
     libvips = {
-        cxflags = "-pthread",
-        shared = true,
-        linkdirs = { },
-        defines = {
-            "WITH_GZFILEOP",
-            "PCRE2_CODE_UNIT_WIDTH=8"
-        },
         links = {
             "vips-cpp",
             "vips",
             "gio-2.0",
             "gobject-2.0",
             "glib-2.0",
-            "gthread-2.0",
-            "gmodule-2.0",
             "ffi",
             "z",
             "elf",
             "pcre2-8",
             "expat"
         },
+        libfiles = {
+            "/usr/lib/libvips-cpp.so",
+            "/usr/lib/libvips.so",
+            "/usr/lib/vips-modules-8.18/vips-heif.so",
+            "/usr/lib/vips-modules-8.18/vips-jxl.so",
+            "/usr/lib/vips-modules-8.18/vips-magick.so",
+            "/usr/lib/vips-modules-8.18/vips-openslide.so",
+            "/usr/lib/vips-modules-8.18/vips-poppler.so",
+            "/usr/lib/libffi.so",
+            "/usr/lib/libelf.a",
+            "/usr/lib/libpcre2-16.a",
+            "/usr/lib/libpcre2-16.so",
+            "/usr/lib/libpcre2-32.a",
+            "/usr/lib/libpcre2-32.so",
+            "/usr/lib/libpcre2-8.a",
+            "/usr/lib/libpcre2-8.so",
+            "/usr/lib/libpcre2-posix.a",
+            "/usr/lib/libpcre2-posix.so",
+            "/usr/lib/libexpat.so"
+        },
+        defines = {
+            "WITH_GZFILEOP",
+            "PCRE2_CODE_UNIT_WIDTH=8"
+        },
+        __enabled = true,
+        version = "8.18.7",
+        envs = {
+            PATH = {
+                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/bin",
+                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/bin",
+                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/Scripts",
+                "/home/gear/.xmake/packages/m/meson/1.12.1/4422ec0eefae43d68b0abd8c3a52a56f/bin",
+                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
+                "/home/gear/.xmake/packages/p/pkg-config/0.29.2/a0aba256d7674c1bbee15f0ee1534e92/bin",
+                "/home/gear/.xmake/packages/l/libiconv/1.18/6ea6a4b5427c4fd1bd0e88188c0855d8/bin",
+                "/home/gear/.xmake/packages/m/m4/1.4.19/8b7c7260096844c1a8b1c8d773e64b3d/bin",
+                "/home/gear/.xmake/packages/a/autoconf/2.72/acf1540df7454fb895001231995955f2/bin",
+                "/home/gear/.xmake/packages/a/automake/1.17/023583104f8e4bd8aa209b66cbeb4bee/bin",
+                "/home/gear/.xmake/packages/l/libtool/2.6.0/e0bdba70c39545bb9c3dcc8050ee49d5/bin",
+                "/home/gear/.xmake/packages/a/autotools/latest/725e51fe81b74141ade9efbd3ccaf900/bin",
+                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin",
+                "/home/gear/.xmake/packages/g/glib/2.78.1/19890b1935064ee48938a30475bda1a4/bin"
+            },
+            PYTHONPATH = {
+                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/lib/python3.14/site-packages"
+            }
+        },
+        shared = true,
         sysincludedirs = {
             "/usr/include/webp",
             "/usr/include/librsvg-2.0",
@@ -44,96 +83,79 @@
             "/usr/include/libraw",
             "/usr/include/openjpeg-2.5"
         },
-        __requirestr = "libvips",
-        version = "8.18.7",
-        envs = {
-            PATH = {
-                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/bin",
-                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/bin",
-                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/Scripts",
-                "/home/gear/.xmake/packages/m/meson/1.12.1/4422ec0eefae43d68b0abd8c3a52a56f/bin",
-                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
-                "/home/gear/.xmake/packages/p/pkg-config/0.29.2/a0aba256d7674c1bbee15f0ee1534e92/bin",
-                "/home/gear/.xmake/packages/l/libiconv/1.18/6ea6a4b5427c4fd1bd0e88188c0855d8/bin",
-                "/home/gear/.xmake/packages/m/m4/1.4.19/8b7c7260096844c1a8b1c8d773e64b3d/bin",
-                "/home/gear/.xmake/packages/a/autoconf/2.72/acf1540df7454fb895001231995955f2/bin",
-                "/home/gear/.xmake/packages/a/automake/1.17/023583104f8e4bd8aa209b66cbeb4bee/bin",
-                "/home/gear/.xmake/packages/l/libtool/2.6.0/e0bdba70c39545bb9c3dcc8050ee49d5/bin",
-                "/home/gear/.xmake/packages/a/autotools/latest/725e51fe81b74141ade9efbd3ccaf900/bin",
-                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin",
-                "/home/gear/.xmake/packages/g/glib/2.89.2/14531cd7e2bf468e82215f68482054e1/bin"
-            },
-            PYTHONPATH = {
-                "/home/gear/.xmake/packages/p/python/3.14.3/5b29e409d339499392171d61390dfc38/lib/python3.14/site-packages"
-            }
-        },
-        libfiles = {
-            "/usr/lib/libvips-cpp.so",
-            "/usr/lib/libvips.so",
-            "/usr/lib/vips-modules-8.18/vips-heif.so",
-            "/usr/lib/vips-modules-8.18/vips-jxl.so",
-            "/usr/lib/vips-modules-8.18/vips-magick.so",
-            "/usr/lib/vips-modules-8.18/vips-openslide.so",
-            "/usr/lib/vips-modules-8.18/vips-poppler.so",
-            "/usr/lib/libgio-2.0.a",
-            "/usr/lib/libgobject-2.0.a",
-            "/usr/lib/libglib-2.0.a",
-            "/usr/lib/libffi.so",
-            "/usr/lib/libelf.a",
-            "/usr/lib/libpcre2-16.a",
-            "/usr/lib/libpcre2-16.so",
-            "/usr/lib/libpcre2-32.a",
-            "/usr/lib/libpcre2-32.so",
-            "/usr/lib/libpcre2-8.a",
-            "/usr/lib/libpcre2-8.so",
-            "/usr/lib/libpcre2-posix.a",
-            "/usr/lib/libpcre2-posix.so",
-            "/usr/lib/libexpat.so"
-        },
-        __enabled = true
+        __requirestr = "libvips"
     },
-    tbb = {
-        links = "tbb",
-        envs = {
-            LD_LIBRARY_PATH = {
-                "/home/gear/.xmake/packages/t/tbb/2022.1.0/37e13627c69c47f6aef6aeef2774302b/lib"
-            },
-            PATH = {
-                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
-                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin"
+    slint_source = {
+        installdir = "/home/gear/Programming/CPP/OpenPlayer_Slint/build/.packages/s/slint_source/v1.18.0/4e0143c97b65425b855ad5fd03038b6a",
+        libfiles = "/home/gear/Programming/CPP/OpenPlayer_Slint/build/.packages/s/slint_source/v1.18.0/4e0143c97b65425b855ad5fd03038b6a/lib/libslint_cpp.a",
+        __requireconfs = {
+            configs = {
+                shared = false
             }
         },
-        libfiles = "/usr/lib/libtbb.so",
-        shared = true,
-        version = "2023.2.0",
-        __requirestr = "tbb",
-        __enabled = true
+        sysincludedirs = "/home/gear/Programming/CPP/OpenPlayer_Slint/build/.packages/s/slint_source/v1.18.0/4e0143c97b65425b855ad5fd03038b6a/include",
+        static = true,
+        __enabled = true,
+        version = "v1.18.0",
+        __requirestr = "slint_source v1.18.0",
+        linkdirs = "/home/gear/Programming/CPP/OpenPlayer_Slint/build/.packages/s/slint_source/v1.18.0/4e0143c97b65425b855ad5fd03038b6a/lib",
+        links = "slint_cpp"
     },
     nlohmann_json = {
-        sysincludedirs = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf/include",
         installdir = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf",
         version = "v3.12.0",
-        __requirestr = "nlohmann_json",
         license = "MIT",
+        __requirestr = "nlohmann_json",
+        sysincludedirs = "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf/include",
         __enabled = true
     },
+    cpr = {
+        installdir = "/home/gear/.xmake/packages/c/cpr/1.14.2/d6728a2a86d14023847f8b06254fe3bf",
+        libfiles = {
+            "/home/gear/.xmake/packages/c/cpr/1.14.2/d6728a2a86d14023847f8b06254fe3bf/lib/libcpr.a",
+            "/usr/lib/libcurl.so",
+            "/usr/lib/libssl.so",
+            "/usr/lib/libcrypto.so"
+        },
+        sysincludedirs = "/home/gear/.xmake/packages/c/cpr/1.14.2/d6728a2a86d14023847f8b06254fe3bf/include",
+        static = true,
+        __enabled = true,
+        links = {
+            "cpr",
+            "curl",
+            "ssl",
+            "crypto"
+        },
+        version = "1.14.2",
+        syslinks = "pthread",
+        license = "MIT",
+        __requirestr = "cpr",
+        linkdirs = "/home/gear/.xmake/packages/c/cpr/1.14.2/d6728a2a86d14023847f8b06254fe3bf/lib",
+        envs = {
+            PATH = {
+                "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
+                "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin",
+                "/home/gear/.xmake/packages/p/pkg-config/0.29.2/a0aba256d7674c1bbee15f0ee1534e92/bin"
+            }
+        }
+    },
     taglib = {
-        shared = true,
-        defines = "WITH_GZFILEOP",
         links = {
             "tag",
             "z"
         },
-        sysincludedirs = "/usr/include/taglib",
+        libfiles = "/usr/lib/libtag.so",
+        defines = "WITH_GZFILEOP",
+        __enabled = true,
+        version = "2.3.2",
         envs = {
             PATH = {
                 "/home/gear/.xmake/packages/n/ninja/v1.13.2/0a9451759a4647b5923438b464085dd6/bin",
                 "/home/gear/.xmake/packages/c/cmake/4.3.4/478c5cdb1d4b47ff91b42b2ceeb382a8/bin"
             }
         },
-        version = "2.3.2",
-        __requirestr = "taglib",
-        libfiles = "/usr/lib/libtag.so",
-        __enabled = true
+        shared = true,
+        sysincludedirs = "/usr/include/taglib",
+        __requirestr = "taglib"
     }
 }

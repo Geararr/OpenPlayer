@@ -1,5 +1,8 @@
 {
     packages = {
-        "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf"
+        "/home/gear/.xmake/packages/n/nlohmann_json/v3.12.0/b36e201b1206419d94ef523b409412cf",
+        "/home/gear/.xmake/packages/a/autotools/latest/725e51fe81b74141ade9efbd3ccaf900",
+        "/home/gear/.xmake/packages/c/cpr/1.14.2/d6728a2a86d14023847f8b06254fe3bf",
+        "/home/gear/Programming/CPP/OpenPlayer_Slint/build/.packages/s/slint_source/v1.18.0/4e0143c97b65425b855ad5fd03038b6a"
     }
 }
